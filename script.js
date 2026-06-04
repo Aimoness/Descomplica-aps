@@ -435,7 +435,7 @@ function cadastrar() {
   }
 
   if (!cpfValido(usuario.cpf)) {
-    mostrarMensagem("CPF invÃ¡lido", "erro");
+    mostrarMensagem("CPF inválido", "erro");
     return;
   }
 
@@ -447,7 +447,7 @@ function cadastrar() {
 
   if (existe) {
     mostrarMensagem(
-      "CPF jÃ¡ cadastrado",
+      "CPF já cadastrado",
       "erro"
     );
 
@@ -537,7 +537,7 @@ function recuperarSenha() {
   if (!usuario) {
 
     mostrarMensagem(
-      "CPF nÃ£o encontrado",
+      "CPF não encontrado",
       "erro"
     );
 
