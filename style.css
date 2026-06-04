@@ -1,0 +1,1256 @@
+/* ========================= */
+/* BASE GERAL */
+/* ========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body.login-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #dfeee8, #f4f9f7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+}
+
+/* ========================= */
+/* LOGIN / CADASTRO */
+/* ========================= */
+
+.login-container {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+/* Quando clicar em Primeiro acesso */
+.login-container.cadastro-ativo {
+  max-width: 920px;
+  padding: 30px 36px;
+}
+
+/* Título principal */
+.titulo-sistema {
+  color: #1351B4;
+  font-weight: 700;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Badge do perfil */
+.tipo-badge {
+  display: inline-block;
+  font-size: 13px;
+  color: #344054;
+  background: #e3f2fd;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+/* Texto abaixo do título */
+.login-container p {
+  color: #555;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+/* Área do cadastro */
+#areaCadastro {
+  text-align: left;
+}
+
+/* Título do cadastro */
+#areaCadastro h5 {
+  text-align: left;
+  font-size: 21px;
+  font-weight: 700;
+  margin: 20px 0 22px;
+  padding-bottom: 10px;
+  color: #0d6efd;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Labels */
+#areaLogin label,
+#areaCadastro label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+/* Inputs */
+.login-container input,
+.login-container select,
+.form-control {
+  width: 100%;
+  height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.login-container input:focus,
+.login-container select:focus,
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.12);
+}
+
+/* Espaçamento do grid */
+#areaCadastro .row {
+  align-items: end;
+}
+
+/* Botões gerais */
+.login-container button {
+  min-height: 44px;
+  border-radius: 8px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+/* Botões do login continuam largos */
+#areaLogin button {
+  width: 100%;
+}
+
+/* ========================= */
+/* BOTÕES DO CADASTRO */
+/* ========================= */
+
+.acoes-cadastro {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.acoes-cadastro button {
+  width: 160px;
+  height: 44px;
+}
+
+/* ========================= */
+/* HOME */
+/* ========================= */
+
+.home-page {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f3f6fb;
+}
+
+.home-page .split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+}
+
+/* ESQUERDA */
+
+.home-page .left {
+  position: relative;
+  background: url("sus.png") center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 48px;
+  color: #fff;
+}
+
+.home-page .left::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.48));
+}
+
+.home-page .content {
+  position: relative;
+  z-index: 2;
+  max-width: 560px;
+}
+
+.home-page .tag {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.home-page h1 {
+  font-size: 44px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.home-page p {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+/* ALERTAS */
+
+.home-page .ticker {
+  margin-top: 24px;
+  width: 100%;
+  overflow: hidden;
+  background: rgba(255,255,255,.15);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.home-page .ticker-track {
+  display: inline-flex;
+  gap: 10px;
+  white-space: nowrap;
+  animation: tickerMove 28s linear infinite;
+}
+
+.home-page .chip {
+  background: rgba(0,0,0,.3);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+@keyframes tickerMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* DIREITA */
+
+.home-page .right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f6fb;
+  padding: 40px;
+}
+
+.home-page .card-home {
+  background: #fff;
+  padding: 34px;
+  border-radius: 22px;
+  box-shadow: 0 16px 38px rgba(0,0,0,.08);
+  width: 100%;
+  max-width: 470px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.titulo-bemvindo {
+  text-align: center;
+  position: relative;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  color: #083a8b;
+  font-size: 38px;
+  font-weight: 800;
+}
+
+.titulo-bemvindo::after {
+  content: "";
+  display: block;
+  width: 78%;
+  height: 2px;
+  background: #a3c4f9;
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+.notice p {
+  text-align: center;
+  font-size: 16px;
+  color: #222;
+}
+
+.btn-ubs {
+  width: 100%;
+  max-width: 320px;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  transition: 0.25s;
+}
+
+.btn-paciente {
+  background: linear-gradient(135deg, #1e88e5, #1565c0);
+  color: white;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.btn-prof {
+  background: white;
+  color: #1565c0;
+  border: 2px solid #1565c0;
+}
+
+.btn-ubs:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.alerta {
+  text-align: center;
+  color: #e74c3c;
+  margin-top: 18px;
+  font-weight: 600;
+  max-width: 330px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home-page .footer {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-top: 20px;
+}
+
+/* ========================= */
+/* MENSAGEM */
+/* ========================= */
+
+#mensagem {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+/* ========================= */
+/* RESPONSIVO */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .home-page .split {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .left {
+    display: none;
+  }
+
+  .home-page .right {
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .home-page .card-home {
+    max-width: 100%;
+    padding: 28px 22px;
+  }
+
+  .titulo-bemvindo {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  body:not(.home-page) {
+    align-items: flex-start;
+    padding: 20px 12px;
+  }
+
+  .login-container,
+  .login-container.cadastro-ativo {
+    max-width: 100%;
+    padding: 24px;
+  }
+
+  .titulo-sistema {
+    font-size: 24px;
+  }
+
+  #areaCadastro h5 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .acoes-cadastro {
+    flex-direction: column;
+  }
+
+  .acoes-cadastro button {
+    width: 100%;
+  }
+}
+
+/* ========================= */
+/* DASHBOARDS PADRÃO - CORRIGIDO */
+/* ========================= */
+
+body.dashboard-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  display: block !important;
+  background: #f4f6f9 !important;
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Layout principal */
+body.dashboard-page .dashboard-layout {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  background: #f4f6f9;
+}
+
+/* Sidebar */
+body.dashboard-page .dashboard-sidebar {
+  width: 260px;
+  min-width: 260px;
+  min-height: 100vh;
+  background: #5f8fdd;
+  color: #fff;
+  padding: 30px 24px;
+  flex-shrink: 0;
+}
+
+body.dashboard-page .dashboard-sidebar h4 {
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 28px;
+}
+
+body.dashboard-page .dashboard-sidebar .user-name {
+  font-size: 15px;
+  opacity: 0.95;
+  margin-bottom: 28px;
+}
+
+body.dashboard-page .dashboard-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+body.dashboard-page .dashboard-sidebar nav a,
+body.dashboard-page .dashboard-sidebar a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+body.dashboard-page .dashboard-sidebar nav a:hover,
+body.dashboard-page .dashboard-sidebar a:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Botão sair */
+body.dashboard-page .btn-sair,
+body.dashboard-page .dashboard-sidebar .btn-sair {
+  width: 100%;
+  height: 44px;
+  margin-top: 28px;
+  background: #c0392b;
+  border: none;
+  color: #fff;
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+body.dashboard-page .btn-sair:hover,
+body.dashboard-page .dashboard-sidebar .btn-sair:hover {
+  background: #a93226;
+}
+
+/* Conteúdo */
+body.dashboard-page .dashboard-content {
+  flex: 1;
+  width: calc(100% - 260px);
+  padding: 40px 48px;
+  min-width: 0;
+}
+
+/* Cabeçalho */
+body.dashboard-page .dashboard-header {
+  width: 100%;
+  max-width: 1180px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+body.dashboard-page .dashboard-header h3 {
+  color: #0d6efd;
+  font-size: 34px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+body.dashboard-page .dashboard-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Cards principais */
+body.dashboard-page .dashboard-card {
+  width: 100%;
+  max-width: 1180px;
+  background: #ffffff;
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+  padding: 28px;
+  margin-bottom: 26px;
+}
+
+body.dashboard-page .dashboard-card h5 {
+  color: #0d6efd;
+  font-size: 23px;
+  font-weight: 800;
+  margin-bottom: 22px;
+}
+
+/* Cards do paciente */
+body.dashboard-page .dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px;
+  margin-bottom: 28px;
+  max-width: 1180px;
+}
+
+body.dashboard-page .dashboard-info-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  min-height: 115px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+body.dashboard-page .dashboard-info-card small {
+  color: #667085;
+  font-size: 14px;
+}
+
+body.dashboard-page .dashboard-info-card div {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+body.dashboard-page .grafico-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+body.dashboard-page .grafico-topo h5 {
+  margin-bottom: 0;
+}
+
+body.dashboard-page .btn-tema-grafico {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #344054;
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+body.dashboard-page .grafico-wrapper {
+  width: 100%;
+  height: 340px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+body.dashboard-page .grafico-wrapper canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+body.dashboard-page.tema-escuro {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dashboard-page.tema-escuro .dashboard-layout,
+body.dashboard-page.tema-escuro .dashboard-content {
+  background: #0f172a;
+}
+
+body.dashboard-page.tema-escuro .dashboard-sidebar {
+  background: #111827;
+}
+
+body.dashboard-page.tema-escuro .dashboard-header h3,
+body.dashboard-page.tema-escuro .dashboard-card h5,
+body.dashboard-page.tema-escuro .grafico-topo h5 {
+  color: #93c5fd;
+}
+
+body.dashboard-page.tema-escuro .dashboard-card,
+body.dashboard-page.tema-escuro .dashboard-info-card,
+body.dashboard-page.tema-escuro .card {
+  background: #182235 !important;
+  color: #e5e7eb;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+
+body.dashboard-page.tema-escuro .dashboard-info-card small,
+body.dashboard-page.tema-escuro .text-muted,
+body.dashboard-page.tema-escuro label,
+body.dashboard-page.tema-escuro p {
+  color: #cbd5e1 !important;
+}
+
+body.dashboard-page.tema-escuro .dashboard-info-card div,
+body.dashboard-page.tema-escuro strong,
+body.dashboard-page.tema-escuro #historico {
+  color: #f9fafb;
+}
+
+body.dashboard-page.tema-escuro .form-control,
+body.dashboard-page.tema-escuro #buscaPaciente {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+body.dashboard-page.tema-escuro .form-control::placeholder,
+body.dashboard-page.tema-escuro #buscaPaciente::placeholder {
+  color: #94a3b8;
+}
+
+body.dashboard-page.tema-escuro .grafico-wrapper {
+  background: #111827;
+  border-color: #334155;
+}
+
+body.dashboard-page.tema-escuro .btn-tema-grafico {
+  background: #1f2937;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+body.dashboard-page.tema-escuro .alerta-normal {
+  background: #06351f !important;
+}
+
+body.dashboard-page.tema-escuro .alerta-atencao {
+  background: #3b2f07 !important;
+}
+
+body.dashboard-page.tema-escuro .alerta-critico {
+  background: #e74c3c !important;
+}
+
+/* Formulários */
+body.dashboard-page .dashboard-card .form-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+body.dashboard-page .dashboard-card .form-control,
+body.dashboard-page #buscaPaciente {
+  height: 46px;
+  border-radius: 10px;
+  font-size: 15px;
+  padding: 10px 14px;
+}
+
+/* ========================= */
+/* PAINEL PROFISSIONAL */
+/* ========================= */
+
+body.dashboard-page .paciente-item {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+
+body.dashboard-page .paciente-info strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+body.dashboard-page .paciente-info span {
+  display: block;
+  font-size: 14px;
+  color: #667085;
+  line-height: 1.45;
+}
+
+body.dashboard-page .paciente-item button {
+  width: 140px;
+  min-width: 140px;
+  height: 40px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+/* Detalhes do paciente */
+body.dashboard-page .detalhes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+body.dashboard-page .detalhe-box {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 13px;
+}
+
+body.dashboard-page .detalhe-box small {
+  display: block;
+  color: #667085;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+body.dashboard-page .detalhe-box strong {
+  color: #111827;
+  font-size: 15px;
+}
+
+/* Histórico no painel profissional */
+body.dashboard-page .historico-profissional-item {
+  background: #ffffff;
+  border-left: 4px solid #0d6efd;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* Alertas no painel profissional */
+body.dashboard-page .dashboard-card .alerta {
+  background: #fff5f5;
+  border-left: 4px solid #e74c3c;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: left;
+  max-width: none;
+  color: #111827;
+}
+
+/* Registros recentes */
+body.dashboard-page .registro {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+/* ========================= */
+/* ALERTAS DO PACIENTE */
+/* ========================= */
+
+body.dashboard-page .alerta-status {
+  border-left: 5px solid #d0d5dd;
+}
+
+body.dashboard-page .alerta-normal {
+  border-left-color: #198754;
+  background: #f0fff4;
+}
+
+body.dashboard-page .alerta-atencao {
+  border-left-color: #ffc107;
+  background: #fffbea;
+}
+
+body.dashboard-page .alerta-critico {
+  border-left-color: #dc3545;
+  background: #fff5f5;
+}
+
+body.dashboard-page .alerta-normal #cardAlerta {
+  color: #198754;
+}
+
+body.dashboard-page .alerta-atencao #cardAlerta {
+  color: #b58100;
+}
+
+body.dashboard-page .alerta-critico #cardAlerta {
+  color: #dc3545;
+}
+
+/* Corrige alerta da home para não ser afetado pelo dashboard */
+.home-page .alerta {
+  text-align: center;
+  color: #e74c3c;
+  margin-top: 18px;
+  font-weight: 600;
+  max-width: 330px;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent;
+  border-left: none;
+  padding: 0;
+}
+
+/* ========================= */
+/* CAMPOS DO CADASTRO */
+/* ========================= */
+
+.campo-profissional {
+  display: none;
+}
+
+.acoes-cadastro {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.acoes-cadastro button {
+  width: 160px;
+  height: 44px;
+}
+
+/* ========================= */
+/* RESPONSIVO DASHBOARD */
+/* ========================= */
+
+@media (max-width: 1200px) {
+  body.dashboard-page .dashboard-content {
+    padding: 34px 34px;
+  }
+
+  body.dashboard-page .dashboard-header h3 {
+    font-size: 30px;
+  }
+
+  body.dashboard-page .dashboard-card,
+  body.dashboard-page .dashboard-header,
+  body.dashboard-page .dashboard-cards-grid {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  body.dashboard-page .dashboard-layout {
+    flex-direction: column;
+  }
+
+  body.dashboard-page .dashboard-sidebar {
+    width: 100%;
+    min-width: 100%;
+    min-height: auto;
+    padding: 24px 20px;
+  }
+
+  body.dashboard-page .dashboard-sidebar h4 {
+    font-size: 24px;
+    margin-bottom: 18px;
+  }
+
+  body.dashboard-page .dashboard-content {
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  body.dashboard-page .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  body.dashboard-page .dashboard-header h3 {
+    font-size: 26px;
+    white-space: normal;
+  }
+
+  body.dashboard-page .dashboard-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  body.dashboard-page .dashboard-card h5 {
+    font-size: 20px;
+  }
+
+  body.dashboard-page .grafico-topo {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body.dashboard-page .grafico-wrapper {
+    height: 300px;
+    padding: 8px;
+  }
+
+  body.dashboard-page .paciente-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  body.dashboard-page .paciente-item button {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  body.dashboard-page .detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes-cadastro {
+    flex-direction: column;
+  }
+
+  .acoes-cadastro button {
+    width: 100%;
+  }
+}
+/* ========================= */
+/* AUMENTAR CAIXAS DO PAINEL PROFISSIONAL */
+/* ========================= */
+
+body.dashboard-page .dashboard-header,
+body.dashboard-page .dashboard-card {
+  max-width: 1500px !important;
+}
+
+body.dashboard-page .dashboard-content {
+  padding: 40px 70px !important;
+}
+
+body.dashboard-page .dashboard-card {
+  width: 100% !important;
+  padding: 34px !important;
+}
+
+body.dashboard-page .paciente-item {
+  padding: 22px 26px !important;
+  min-height: 115px !important;
+}
+
+body.dashboard-page #buscaPaciente {
+  height: 52px !important;
+  font-size: 16px !important;
+}
+
+body.dashboard-page .paciente-item button {
+  width: 180px !important;
+  min-width: 180px !important;
+  height: 48px !important;
+  font-size: 15px !important;
+}
+
+@media (max-width: 900px) {
+  body.dashboard-page .dashboard-content {
+    padding: 24px 16px !important;
+  }
+
+  body.dashboard-page .dashboard-card {
+    max-width: 100% !important;
+    padding: 22px !important;
+  }
+
+  body.dashboard-page .paciente-item {
+    min-height: auto !important;
+  }
+
+  body.dashboard-page .paciente-item button {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+/* alerta */
+
+.alerta-critico {
+  background: #e74c3c !important;
+  color: white !important;
+  border-left: 5px solid #c0392b !important;
+}
+
+.alerta-paciente {
+  border-left: 5px solid #e74c3c;
+  background: #fff5f5;
+}
+
+.alerta-atencao {
+  border-left: 5px solid #f39c12;
+  background: #fff4e5;
+}
+
+.alerta-normal {
+  border-left: 5px solid #2ecc71;
+  background: #eafaf1;
+}
+
+.resumo-sidebar {
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.resumo-sidebar p {
+  margin: 5px 0;
+}
+
+.dashboard-sidebar .alerta {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.dashboard-sidebar .alerta-critico {
+  background: #e74c3c !important;
+  border-left: 4px solid #c0392b;
+}
+
+.dashboard-sidebar .alerta-atencao {
+  background: #f39c12 !important;
+}
+
+.dashboard-sidebar .alerta-normal {
+  background: #2ecc71 !important;
+}
+
+body.dashboard-page .alerta-critico small,
+body.dashboard-page .alerta-critico #cardAlerta {
+  color: #fff !important;
+}
+
+.menu-btn{
+  width:100%;
+  background:none;
+  border:none;
+  color:#fff;
+  text-align:left;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:15px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.menu-btn:hover{
+  background:rgba(255,255,255,.15);
+}
+
+/* ========================= */
+/* AJUSTES FINAIS DE INTERFACE */
+/* ========================= */
+
+.app-footer {
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  color: #667085;
+  font-size: 13px;
+}
+
+body.dashboard-page .dashboard-sidebar nav a {
+  display: none;
+}
+
+body.dashboard-page .theme-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.menu-btn.ativo {
+  background: rgba(255,255,255,.22);
+  font-weight: 800;
+}
+
+.perfil-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
+}
+
+.perfil-resumo {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 22px;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.perfil-avatar {
+  width: 136px;
+  height: 136px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1351b4, #0f766e);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 800;
+}
+
+.perfil-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-resumo h4 {
+  margin: 18px 0 6px;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.perfil-resumo p {
+  margin: 0;
+  color: #667085;
+}
+
+.perfil-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.perfil-campos label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.perfil-span {
+  grid-column: 1 / -1;
+}
+
+.perfil-historicos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.perfil-historicos > div {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+body.dashboard-page.tema-escuro .theme-toggle {
+  background: #1f2937;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+body.dashboard-page.tema-escuro .modal-content,
+body.dashboard-page.tema-escuro .perfil-resumo,
+body.dashboard-page.tema-escuro .perfil-historicos > div {
+  background: #111827;
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+body.dashboard-page.tema-escuro .perfil-resumo h4,
+body.dashboard-page.tema-escuro .perfil-campos label {
+  color: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .perfil-grid,
+  .perfil-campos,
+  .perfil-historicos {
+    grid-template-columns: 1fr;
+  }
+}
+
+body {
+  padding-bottom: 52px;
+}
+
+.home-page .footer,
+.app-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 12px 16px;
+  background: rgba(244, 249, 247, 0.96);
+  color: #475467;
+  text-align: center;
+  font-size: 13px;
+  border-top: 1px solid rgba(19, 81, 180, 0.08);
+}
+
+body.dashboard-page.tema-escuro .app-footer {
+  background: rgba(15, 23, 42, 0.96);
+  color: #cbd5e1;
+  border-top-color: #334155;
+}

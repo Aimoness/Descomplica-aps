@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1351B4">
+<link rel="icon" type="image/png" href="./logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Descomplica APS - Painel do Paciente</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* Corrige conflito com o CSS geral do login */
+body.dashboard-page {
+  margin: 0;
+  padding: 0 !important;
+  min-height: 100vh;
+  display: block !important;
+  background: #f4f6f9;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Layout principal */
+.dashboard-layout {
+  min-height: 100vh;
+  display: flex;
+  background: #f4f6f9;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: #5f8fdd;
+  color: #fff;
+  padding: 28px 22px;
+  flex-shrink: 0;
+}
+
+.dashboard-sidebar h4 {
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 18px;
+}
+
+.dashboard-sidebar .user-name {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 22px;
+}
+
+.dashboard-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-sidebar a {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.dashboard-sidebar a:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+.btn-sair {
+  width: 100%;
+  height: 44px;
+  margin-top: 30px;
+  background: #c0392b;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.btn-sair:hover {
+  background: #a93226;
+}
+
+/* Conteúdo */
+.dashboard-content {
+  flex: 1;
+  padding: 36px 42px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.dashboard-header h3 {
+  color: #0d6efd;
+  font-size: 34px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dashboard-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Cards superiores */
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.dashboard-info-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  min-height: 115px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.dashboard-info-card small {
+  color: #667085;
+  font-size: 14px;
+}
+
+.dashboard-info-card div {
+  font-size: 25px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+/* Cards de seção */
+.dashboard-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  padding: 24px;
+  margin-bottom: 26px;
+}
+
+.dashboard-card h5 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+/* Formulário */
+.dashboard-card .form-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dashboard-card .form-control {
+  height: 44px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.acoes-registro {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.acoes-registro button {
+  width: 220px;
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .dashboard-content {
+    padding: 24px 18px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-header h3 {
+    font-size: 27px;
+  }
+
+  .dashboard-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes-registro {
+    flex-direction: column;
+    justify-content: stretch;
+  }
+
+  .acoes-registro button {
+    width: 100%;
+  }
+}
+</style>
+</head>
+
+<body class="dashboard-page">
+
+<div id="mensagem"></div>
+
+<script>
+
+if (localStorage.getItem("logado") !== "true") {
+  window.location.href = "index.html";
+}
+
+if (localStorage.getItem("tipoEscolhido") !== "paciente") {
+  window.location.href = "dashboard_profissional.html";
+}
+
+</script>
+
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="dashboard-sidebar">
+    <h4>Descomplica<br>APS</h4>
+
+    <div class="user-name" id="nomeUsuario"></div>
+
+   <button onclick="irInicio()" class="menu-btn" data-section-target="inicio">
+  Início
+</button>
+
+<button onclick="irRegistrar()" class="menu-btn" data-section-target="registrar">
+  Registrar dados
+</button>
+
+<button onclick="irHistorico()" class="menu-btn" data-section-target="historicoSec">
+  Histórico
+</button>
+
+<button onclick="irEvolucao()" class="menu-btn" data-section-target="evolucaoSec">
+  Evolução
+</button>
+
+<button onclick="irAgendamento()" class="menu-btn" data-section-target="agendamentoSec">
+  Agendamento
+</button>
+
+<button onclick="irMeuPerfil()" class="menu-btn" data-section-target="meuPerfilSec">
+  Meu Perfil
+</button>
+
+    <button class="btn-sair" onclick="logout()">Sair</button>
+  </aside>
+
+  <!-- CONTEÚDO -->
+  <main class="dashboard-content">
+
+    <div class="dashboard-header">
+      <h3 id="tituloDashboard"></h3>
+
+      <div class="dashboard-user">
+        <button
+          type="button"
+          class="theme-toggle"
+          onclick="alternarTema()"
+          id="btnAlternarTema"
+          aria-label="Ativar modo escuro">
+          &#9790;
+        </button>
+        <span class="badge bg-primary" id="badgeTipo">PACIENTE</span>
+      </div>
+    </div>
+
+    <!-- CARDS INICIAIS -->
+    <section class="dashboard-cards-grid" id="inicio">
+
+      <div class="dashboard-info-card">
+        <small>Última Pressão</small>
+        <div id="cardPressao">—</div>
+      </div>
+
+      <div class="dashboard-info-card">
+        <small>Última Glicemia</small>
+        <div id="cardGlicemia">—</div>
+      </div>
+
+      <div class="dashboard-info-card">
+        <small>Último Registro</small>
+        <div id="cardData">—</div>
+      </div>
+
+      <div class="dashboard-info-card alerta-status" id="boxAlerta">
+    <small>Status do Acompanhamento</small>
+    <div id="cardAlerta">Sem registros</div>
+  </div>
+
+    </section>
+
+    <!-- REGISTRAR DADOS -->
+    <section id="registrar" class="dashboard-card">
+      <h5 class="text-primary">Registrar Informações de Saúde</h5>
+
+      <div class="row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Pressão Sistólica</label>
+          <input type="number" class="form-control" id="pressao_sistolica">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Pressão Diastólica</label>
+          <input type="number" class="form-control" id="pressao_diastolica">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Glicemia</label>
+          <input type="number" class="form-control" id="glicemia">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Medicamentos</label>
+          <input type="text" class="form-control" id="medicamentos">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Sintomas</label>
+          <input type="text" class="form-control" id="sintomas">
+        </div>
+
+      </div>
+
+      <div class="acoes-registro">
+        <button class="btn btn-primary" onclick="salvarRegistro()">
+          Salvar informações
+        </button>
+
+        <button
+        class="btn btn-secondary"
+        onclick="cancelarEdicao()"
+        >
+       Cancelar edição
+       </button>
+
+      </div>
+     </section>
+
+<!-- AGENDAMENTO -->
+<section id="agendamentoSec" class="dashboard-card">
+
+  <h5 class="text-primary">
+    Agendar Consulta
+  </h5>
+
+  <div class="row g-3">
+
+    <div class="col-md-6">
+      <label class="form-label">
+        Data
+      </label>
+
+      <input
+        type="date"
+        id="dataConsulta"
+        class="form-control">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">
+        Horário
+      </label>
+
+      <input
+        type="time"
+        id="horaConsulta"
+        class="form-control">
+    </div>
+
+  </div>
+
+  <div class="mt-3">
+
+    <button
+      class="btn btn-primary"
+      onclick="agendarConsulta()">
+
+      Agendar Consulta
+
+    </button>
+
+  </div>
+
+  <div
+    id="listaConsultas"
+    class="mt-4">
+
+  </div>
+
+</section>
+
+    <!-- HISTÓRICO -->
+    <section id="historicoSec" class="dashboard-card">
+      <h5>Histórico</h5>
+      <div id="historico"></div>
+    </section>
+
+    <!-- EVOLUÇÃO -->
+    <section id="evolucaoSec" class="dashboard-card">
+      <div class="grafico-topo">
+        <h5>Evolução</h5>
+
+        <button
+          type="button"
+          class="btn-tema-grafico d-none"
+          onclick="alternarTemaGrafico()"
+          id="btnTemaGrafico">
+          &#9790;
+        </button>
+      </div>
+
+      <small class="text-muted d-block mb-3">
+        Acompanhamento de pressão
+      </small>
+
+      <div class="grafico-wrapper">
+        <canvas id="grafico"></canvas>
+      </div>
+    </section>
+
+    <section id="meuPerfilSec" class="dashboard-card">
+      <h5 class="text-primary">Meu Perfil</h5>
+      <div id="meuPerfilConteudo"></div>
+    </section>
+
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+verificarLogin();
+
+mostrarConsultas();
+mostrarSecao("inicio");
+
+const nome = localStorage.getItem("usuarioNome");
+
+if (nome) {
+  document.getElementById("tituloDashboard").innerText = "Bem-vindo, " + nome;
+  document.getElementById("nomeUsuario").innerText = nome;
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("App pronto"))
+    .catch(() => console.log("Erro no app"));
+}
+</script>
+
+
+</body>
+</html>

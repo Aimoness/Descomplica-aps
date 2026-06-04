@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cadastro - Descomplica APS</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1351B4">
+<link rel="icon" type="image/png" href="./logo.png">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* ========================= */
+/* CADASTRO SEPARADO */
+/* ========================= */
+
+body.cadastro-page{
+  margin:0;
+  min-height:100vh;
+  background: linear-gradient(135deg,#e8f1fb,#f4f8fc);
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:32px 16px !important;
+  font-family:"Segoe UI", Arial, sans-serif;
+  overflow-y:auto;
+}
+
+.cadastro-container{
+  background:#fff;
+  padding:32px;
+  border-radius:16px;
+  box-shadow:0 10px 28px rgba(0,0,0,.08);
+  width:100%;
+  max-width:460px;
+}
+
+.titulo{
+  font-weight:700;
+  color:#1351B4;
+  font-size:26px;
+  line-height:1.2;
+}
+
+.subtitulo{
+  font-size:14px;
+  color:#666;
+  line-height:1.4;
+}
+
+.form-label{
+  font-size:14px;
+  font-weight:600;
+  color:#111827;
+  margin-bottom:6px;
+}
+
+.form-control{
+  height:44px;
+  border-radius:8px;
+  font-size:15px;
+}
+
+.form-control:focus{
+  border-color:#1351B4;
+  box-shadow:0 0 0 3px rgba(19,81,180,0.12);
+}
+
+.btn{
+  height:44px;
+  border-radius:8px !important;
+  font-weight:700;
+  font-size:15px;
+}
+
+.link-voltar{
+  font-size:14px;
+  color:#1351B4;
+  font-weight:600;
+}
+
+/* NOTEBOOK / TELAS MÉDIAS */
+@media(max-width:992px){
+  body.cadastro-page{
+    align-items:flex-start !important;
+    padding-top:40px !important;
+  }
+
+  .cadastro-container{
+    max-width:430px;
+  }
+}
+
+/* CELULAR */
+@media(max-width:576px){
+  body.cadastro-page{
+    padding:20px 12px !important;
+    align-items:flex-start !important;
+  }
+
+  .cadastro-container{
+    max-width:100%;
+    padding:24px 18px;
+    border-radius:14px;
+  }
+
+  .titulo{
+    font-size:24px;
+  }
+
+  .subtitulo{
+    font-size:13px;
+  }
+
+  .form-control{
+    height:44px;
+    font-size:14px;
+  }
+
+  .btn{
+    height:44px;
+    font-size:14px;
+  }
+}
+
+/* CELULAR MUITO PEQUENO */
+@media(max-width:380px){
+  .cadastro-container{
+    padding:22px 14px;
+  }
+
+  .titulo{
+    font-size:22px;
+  }
+}
+</style>
+</head>
+
+<body class="cadastro-page">
+
+<div id="mensagem"></div>
+
+<div class="cadastro-container">
+  
+  <h4 class="text-center titulo mb-1">Criar Acesso</h4>
+
+  <p class="text-center subtitulo mb-4">
+    Preencha os dados para realizar o primeiro acesso.
+  </p>
+
+  <div class="mb-3">
+    <label class="form-label">Nome completo</label>
+    <input 
+      id="nomeCadastro" 
+      class="form-control" 
+      placeholder="Digite seu nome completo">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">CPF</label>
+    <input 
+      id="cpfCadastro"
+      class="form-control"
+      placeholder="000.000.000-00"
+      maxlength="14"
+      inputmode="numeric"
+      oninput="mascaraCPF(this)">
+  </div>
+
+ <div style="position: relative;">
+  <input
+    id="senhaCadastro"
+    type="password"
+    class="form-control"
+    placeholder="Crie uma senha"
+    style="padding-right: 40px;">
+
+  <span onclick="toggleSenha('senhaCadastro')"
+      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
+  👁
+</span>
+</div>
+
+  <div id="areaRecuperar" style="display:none; margin-top:15px;">
+
+  <input id="cpfRecuperar" class="form-control mb-2" placeholder="Digite seu CPF">
+
+  <input id="novaSenha" type="password" class="form-control mb-2" placeholder="Nova senha">
+
+  <button class="btn btn-warning w-100" onclick="recuperarSenha()">
+    Atualizar senha
+  </button>
+
+   </div>
+
+  <button class="btn btn-primary w-100 mb-2" onclick="cadastrar()">
+    Cadastrar
+  </button>
+
+  <div class="text-center mt-3">
+    <a href="login.html" class="text-decoration-none link-voltar">
+      Voltar para login
+    </a>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

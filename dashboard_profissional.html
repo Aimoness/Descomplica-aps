@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Descomplica APS - Profissional</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1351B4">
+<link rel="icon" type="image/png" href="./logo.png">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="dashboard-page">
+
+<div id="mensagem"></div>
+
+<script>
+if (localStorage.getItem("logado") !== "true") {
+  window.location.href = "index.html";
+}
+
+if (localStorage.getItem("tipoEscolhido") !== "profissional") {
+  window.location.href = "dashboard_paciente.html";
+}
+</script>
+
+<div class="dashboard-layout">
+
+  <aside class="dashboard-sidebar">
+    <h4>Descomplica<br>APS</h4>
+
+    <div class="user-name">
+      Profissional: <span id="nomeProf"></span>
+    </div>
+
+    <div class="resumo-sidebar">
+    <p>👥 Total pacientes: <strong id="totalPacientes">0</strong></p>
+    <p>🚨 Em alerta: <strong id="totalAlertas">0</strong></p>
+    </div>
+
+    <nav>
+      <a href="#alertas">Alertas críticos</a>
+      <a href="#registros">Registros recentes</a>
+      <button onclick="mostrarSecao('pacientesSec')" class="menu-btn" data-section-target="pacientesSec">Pacientes</button>
+      <button onclick="mostrarSecao('alertasSec')" class="menu-btn" data-section-target="alertasSec">Alertas críticos</button>
+      <button onclick="mostrarSecao('registrosSec')" class="menu-btn" data-section-target="registrosSec">Registros recentes</button>
+      <button onclick="mostrarSecao('consultasProfissionalSec')" class="menu-btn" data-section-target="consultasProfissionalSec">Consultas</button>
+      <button onclick="irMeuPerfil()" class="menu-btn" data-section-target="meuPerfilSec">Meu Perfil</button>
+    </nav>
+
+    <button class="btn-sair" onclick="logout()">Sair</button>
+  </aside>
+
+  
+
+    <main class="dashboard-content">
+
+  <div class="dashboard-header">
+    <h3>Painel do Profissional</h3>
+
+    <div class="dashboard-user">
+      <button
+        type="button"
+        class="theme-toggle"
+        onclick="alternarTema()"
+        id="btnAlternarTema"
+        aria-label="Ativar modo escuro">
+        &#9790;
+      </button>
+      <span class="badge bg-primary" id="badgeTipoPainel">PROFISSIONAL</span>
+      <strong id="nomeProfTopo"></strong>
+    </div>
+  </div>
+
+  <!-- LISTA DE PACIENTES -->
+  <section class="dashboard-card" id="pacientesSec">
+    <h5 class="text-primary">Pacientes Cadastrados</h5>
+
+    <div class="mb-3">
+      <input 
+        type="text" 
+        id="buscaPaciente" 
+        class="form-control" 
+        placeholder="Buscar paciente por nome ou CPF"
+        oninput="filtrarPacientesProfissional()">
+    </div>
+
+    <div id="listaPacientes">
+      <p class="text-muted mb-0">Nenhum paciente cadastrado.</p>
+    </div>
+  </section>
+
+  <!-- DETALHES DO PACIENTE -->
+  <section class="dashboard-card" id="detalhesPaciente" style="display:none;">
+    <div id="conteudoDetalhesPaciente"></div>
+  </section>
+
+  <!-- ALERTAS -->
+  <section class="dashboard-card" id="alertasSec">
+    <h5 class="text-danger">Alertas Críticos</h5>
+    <div id="alertas">
+      <p class="text-muted mb-0"> Nenhum alerta crítico no momento.</p>
+    </div>
+  </section>
+
+  <!-- REGISTROS -->
+  <section class="dashboard-card" id="registrosSec">
+    <h5 class="text-primary">Registros Recentes</h5>
+    <div id="registros">
+      <p class="text-muted mb-0">Nenhum registro recente encontrado.</p>
+    </div>
+  </section>
+
+  <section class="dashboard-card" id="consultasProfissionalSec">
+  <h5 class="text-primary">
+    Consultas Agendadas
+  </h5>
+
+  <div id="listaConsultasProfissional">
+    <p class="text-muted">
+      Nenhuma consulta agendada.
+    </p>
+  </div>
+</section>
+
+  <section class="dashboard-card" id="meuPerfilSec">
+    <h5 class="text-primary">Meu Perfil</h5>
+    <div id="meuPerfilConteudo"></div>
+  </section>
+
+</main>
+  
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+const nome = localStorage.getItem("usuarioNome");
+
+if (nome){
+  document.getElementById("nomeProf").innerText = nome;
+  document.getElementById("nomeProfTopo").innerText = nome;
+}
+
+</script>
+
+<div class="modal fade" id="modalEditarPaciente" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Editar Paciente
+        </h5>
+
+        <button 
+          type="button" 
+          class="btn-close"
+          data-bs-dismiss="modal">
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <input
+          type="hidden"
+          id="editCpf">
+
+        <div class="mb-3">
+          <label class="form-label">
+            Nome
+          </label>
+
+          <input
+            type="text"
+            id="editNome"
+            class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">
+            Telefone
+          </label>
+
+          <input
+            type="text"
+            id="editTelefone"
+            class="form-control">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button
+          class="btn btn-secondary"
+          data-bs-dismiss="modal">
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-primary"
+          onclick="salvarEdicaoPaciente()">
+          Salvar
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+window.onload = function () {
+
+  mostrarPacientes();
+
+  atualizarTotalPacientes();
+
+  atualizarTotalAlertas();
+
+  mostrarAlertasCriticos();
+
+  mostrarConsultasProfissional();
+
+  mostrarSecao("pacientesSec");
+
+};
+
+</script>
+
+</body>
+</html>

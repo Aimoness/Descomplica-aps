@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal UBS - Acesso</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1351B4">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="./logo.png">
+
+<style>
+body{
+  background: linear-gradient(135deg,#e8f1fb,#f4f8fc);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px 16px;
+  overflow-y:auto;
+}
+
+.login-container{
+  background:#fff;
+  padding:32px;
+  border-radius:16px;
+  box-shadow:0 8px 25px rgba(0,0,0,.08);
+  width:100%;
+  max-width:420px;
+  transition:all .25s ease;
+}
+
+.login-container.cadastro-ativo{
+  max-width:960px;
+}
+
+.titulo-sistema{
+  font-weight:700;
+  color:#1351B4;
+  font-size:28px;
+}
+
+.tipo-badge{
+  font-size:14px;
+  background:#e3f2fd;
+  padding:6px 14px;
+  border-radius:20px;
+  display:inline-block;
+}
+
+#areaCadastro{
+  display:none;
+}
+
+#areaCadastro h5{
+  text-align:left;
+  font-size:22px;
+  font-weight:700;
+  margin:20px 0 24px;
+  padding-bottom:10px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+#areaLogin label,
+#areaCadastro label{
+  font-weight:600;
+  font-size:14px;
+  margin-bottom:5px;
+}
+
+.form-control{
+  height:46px;
+  border-radius:9px;
+  font-size:15px;
+}
+
+.campo-profissional{
+  display:none;
+}
+
+button{
+  min-height:46px;
+  border-radius:9px !important;
+  font-weight:700 !important;
+}
+
+.acoes-cadastro{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:26px;
+}
+
+.acoes-cadastro button{
+  width:160px;
+}
+
+@media(max-width:768px){
+  body{
+    padding:18px 10px;
+    align-items:flex-start;
+  }
+
+  .login-container,
+  .login-container.cadastro-ativo{
+    max-width:100%;
+    padding:22px 18px;
+    border-radius:14px;
+  }
+
+  .titulo-sistema{
+    font-size:24px;
+  }
+
+  #areaCadastro h5{
+    text-align:center;
+    font-size:20px;
+  }
+
+  .acoes-cadastro{
+    flex-direction:column-reverse;
+  }
+
+  .acoes-cadastro button{
+    width:100%;
+  }
+}
+</style>
+</head>
+
+<body class="login-page">
+
+<div id="mensagem"></div>
+
+<script>
+const tipo = localStorage.getItem("tipoEscolhido");
+
+if (!tipo || !["paciente", "profissional"].includes(tipo)) {
+  localStorage.removeItem("tipoEscolhido");
+  window.location.href = "index.html";
+}
+</script>
+
+<div class="login-container">
+  <h4 class="text-center titulo-sistema">Portal da UBS</h4>
+
+  <p class="text-center mb-3">
+    <span class="tipo-badge" id="tipoEscolhidoTxt"></span>
+  </p>
+
+  <div id="areaLogin">
+    <div class="mb-3">
+      <label class="form-label">CPF</label>
+      <input id="cpf" class="form-control" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="mascaraCPF(this)">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Senha</label>
+      <div style="position:relative;">
+        <input id="senha" type="password" class="form-control" placeholder="Digite sua senha" style="padding-right:40px;">
+        <span onclick="toggleSenha('senha')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">&#128065;</span>
+      </div>
+    </div>
+
+    <div class="text-center mb-3">
+      <a href="recuperar.html" style="font-size:13px; text-decoration:underline;">Esqueci minha senha</a>
+    </div>
+
+    <button class="btn btn-primary w-100 mb-2" onclick="login()">Entrar</button>
+    <button class="btn btn-outline-primary w-100" onclick="primeiroAcesso(localStorage.getItem('tipoEscolhido') || 'paciente')">Primeiro acesso</button>
+  </div>
+
+  <div id="areaCadastro">
+    <h5 id="tituloCadastro">Primeiro acesso do paciente</h5>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label>Nome completo</label>
+        <input id="nomeCadastro" class="form-control" placeholder="Digite seu nome completo">
+      </div>
+
+      <div class="col-md-3">
+        <label>CPF</label>
+        <input id="cpfCadastro" class="form-control" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="mascaraCPF(this)">
+      </div>
+
+      <div class="col-md-3">
+        <label>Telefone</label>
+        <input id="telefoneCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-4 campo-profissional">
+        <label>Funcao</label>
+        <input id="funcaoProfissionalCadastro" class="form-control" placeholder="Ex: Enfermeiro(a)">
+      </div>
+
+      <div class="col-md-4 campo-profissional">
+        <label>Numero de registro</label>
+        <input id="registroProfissionalCadastro" class="form-control" placeholder="Ex: COREN 000000">
+      </div>
+
+      <div class="col-md-4 campo-profissional">
+        <label>Unidade de atendimento</label>
+        <input id="unidadeCadastro" class="form-control" placeholder="Ex: UBS Centro">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Sexo</label>
+        <input id="sexoCadastro" class="form-control" placeholder="Masculino ou Feminino">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Estado civil</label>
+        <input id="estadoCivilCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Data de nascimento</label>
+        <input id="dataCadastro" type="date" class="form-control">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Estado</label>
+        <input id="estadoCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Cidade</label>
+        <input id="cidadeCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-3 campo-paciente">
+        <label>Bairro</label>
+        <input id="bairroCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-4 campo-paciente">
+        <label>Rua</label>
+        <input id="ruaCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-2 campo-paciente">
+        <label>Número</label>
+        <input id="numeroCadastro" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label>Senha</label>
+        <input id="senhaCadastro" type="password" class="form-control">
+      </div>
+    </div>
+
+    <div class="acoes-cadastro">
+      <button class="btn btn-outline-secondary" onclick="voltarLogin()">Voltar</button>
+      <button class="btn btn-success" onclick="cadastrar()">Criar conta</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+const t = localStorage.getItem("tipoEscolhido");
+const tipoTexto = document.getElementById("tipoEscolhidoTxt");
+
+if (tipoTexto) {
+  tipoTexto.innerText = "Acesso como: " + (t === "profissional" ? "Profissional" : "Paciente");
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+</body>
+</html>
