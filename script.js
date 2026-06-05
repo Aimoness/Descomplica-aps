@@ -545,6 +545,7 @@ async function recuperarSenha() {
       "erro"
     );
   }
+}
 // SALVAR REGISTRO
 // =============================
 async function salvarRegistro() {
@@ -1085,27 +1086,33 @@ async function excluirRegistro(index) {
 // =============================
 window.onload = function(){
 
-  if(document.getElementById("inicio")){
+  if (document.getElementById("inicio")) {
     mostrarSecao("inicio");
   }
 
-  if(typeof mostrarHistorico === "function"){
+  if (document.getElementById("historico") && typeof mostrarHistorico === "function") {
     mostrarHistorico();
   }
 
-  if(typeof mostrarConsultas === "function"){
+  if (document.getElementById("consultas") && typeof mostrarConsultas === "function") {
     mostrarConsultas();
   }
 
-  if(typeof atualizarCards === "function"){
+  if (
+    (document.getElementById("cardPressao") ||
+      document.getElementById("cardGlicemia") ||
+      document.getElementById("cardData") ||
+      document.getElementById("boxAlerta")) &&
+    typeof atualizarCards === "function"
+  ) {
     atualizarCards();
   }
 
-  if(typeof desenharGrafico === "function"){
+  if (document.getElementById("grafico") && typeof desenharGrafico === "function") {
     desenharGrafico();
   }
 
-  if(typeof mostrarPacientes === "function"){
+  if (document.getElementById("listaPacientes") && typeof mostrarPacientes === "function") {
     mostrarPacientes();
   }
 
