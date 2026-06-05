@@ -25,13 +25,9 @@ window.pageRole = "profissional";
   <aside class="dashboard-sidebar">
     <h4>Descomplica<br>APS</h4>
 
-    <div class="user-name">
-      Profissional: <span id="nomeProf"></span>
-    </div>
-
     <div class="resumo-sidebar">
-    <p>👥 Total pacientes: <strong id="totalPacientes">0</strong></p>
-    <p>🚨 Em alerta: <strong id="totalAlertas">0</strong></p>
+      <p>👥 Total pacientes: <strong id="totalPacientes">0</strong></p>
+      <p>🚨 Em alerta: <strong id="totalAlertas">0</strong></p>
     </div>
 
     <nav>
@@ -41,7 +37,6 @@ window.pageRole = "profissional";
       <button onclick="mostrarSecao('alertasSec')" class="menu-btn" data-section-target="alertasSec">Alertas críticos</button>
       <button onclick="mostrarSecao('registrosSec')" class="menu-btn" data-section-target="registrosSec">Registros recentes</button>
       <button onclick="mostrarSecao('consultasProfissionalSec')" class="menu-btn" data-section-target="consultasProfissionalSec">Consultas</button>
-      <button onclick="irMeuPerfil()" class="menu-btn" data-section-target="meuPerfilSec">Meu Perfil</button>
     </nav>
 
     <button class="btn-sair" onclick="logout()">Sair</button>
@@ -55,14 +50,6 @@ window.pageRole = "profissional";
     <h3>Painel do Profissional</h3>
 
     <div class="dashboard-user">
-      <div class="dashboard-user-profile">
-        <div class="dashboard-user-avatar" id="dashboardAvatarProf"></div>
-        <div class="dashboard-user-meta">
-          <strong id="nomeProfTopo"></strong>
-          <span class="dashboard-user-role">Profissional</span>
-        </div>
-      </div>
-
       <button
         type="button"
         class="theme-toggle"
@@ -125,11 +112,6 @@ window.pageRole = "profissional";
     </p>
   </div>
 </section>
-
-  <section class="dashboard-card" id="meuPerfilSec">
-    <h5 class="text-primary">Meu Perfil</h5>
-    <div id="meuPerfilConteudo"></div>
-  </section>
 
 </main>
   
@@ -220,9 +202,18 @@ async function prepararDashboardProfissional() {
 
   const usuario = obterUsuarioLogado();
   if (usuario) {
-    document.getElementById("nomeProf").innerText = usuario.nome;
-    document.getElementById("nomeProfTopo").innerText = usuario.nome;
+    const nomeProfEl = document.getElementById("nomeProf");
+    const nomeProfTopoEl = document.getElementById("nomeProfTopo");
     const avatar = document.getElementById("dashboardAvatarProf");
+
+    if (nomeProfEl) {
+      nomeProfEl.innerText = usuario.nome;
+    }
+
+    if (nomeProfTopoEl) {
+      nomeProfTopoEl.innerText = usuario.nome;
+    }
+
     if (avatar) {
       avatar.innerHTML = montarAvatar(usuario);
     }
