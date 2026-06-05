@@ -4,14 +4,51 @@
 let editandoIndex = null;
 
 // =============================
-// STORAGE HELPERS
+// FIREBASE STATE
 // =============================
-function obterStorage(chave, padrao = []) {
-  return JSON.parse(localStorage.getItem(chave)) || padrao;
+const appState = {
+  currentUser: null,
+  currentProfile: null,
+  usuarios: [],
+  consultas: [],
+  historicos: {},
+  temaPainel: "claro"
+};
+
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
 }
 
-function salvarStorage(chave, valor) {
-  localStorage.setItem(chave, JSON.stringify(valor));
+function getTipoEscolhido() {
+  return window.tipoEscolhido || getQueryParam("tipo") || "paciente";
+}
+
+async function carregarUsuarios() {
+  if (!window.firebaseService) return [];
+  appState.usuarios = await window.firebaseService.getAllUsers();
+  return appState.usuarios;
+}
+
+async function carregarConsultas() {
+  if (!window.firebaseService) return [];
+  appState.consultas = await window.firebaseService.getConsultas();
+  return appState.consultas;
+}
+
+async function carregarHistorico(cpf) {
+  if (!cpf || !window.firebaseService) return [];
+  let usuario = appState.usuarios.find(u => u.cpf === cpf);
+
+  if (!usuario) {
+    usuario = await window.firebaseService.getUserDocByCpf(cpf);
+  }
+
+  if (!usuario) return [];
+
+  const historicos = await window.firebaseService.getHistoricosByUsuarioId(usuario.uid);
+  appState.historicos[cpf] = historicos;
+  return historicos;
 }
 
 function escaparHTML(valor = "") {
@@ -200,70 +237,64 @@ function toggleSenha(id) {
 // =============================
 // LOGIN
 // =============================
-function login() {
-  const cpfDigitado = limparCPF(obterValor("cpf"));
+async function login() {
+  const email = obterValor("email");
   const senhaDigitada = obterValor("senha");
 
-  if (!cpfDigitado || !senhaDigitada) {
-    mostrarMensagem("Preencha CPF e senha", "erro");
+  if (!email || !senhaDigitada) {
+    mostrarMensagem("Preencha e-mail e senha", "erro");
     return;
   }
 
-  const usuarios = obterStorage("usuarios");
+  try {
+    await window.firebaseService.signIn(email, senhaDigitada);
+    appState.currentUser = window.firebaseService.user;
+    appState.currentProfile = await window.firebaseService.getUserDocByUid(appState.currentUser.uid);
+    await carregarUsuarios();
+    await carregarConsultas();
 
-  const usuario = usuarios.find(u =>
-    u.cpf === cpfDigitado &&
-    u.senha === senhaDigitada
-  );
+    mostrarMensagem("Login realizado!", "sucesso");
 
-  if (!usuario) {
-    mostrarMensagem("CPF ou senha inválidos", "erro");
-    return;
+    setTimeout(() => {
+      if (appState.currentProfile.tipo === "profissional") {
+        window.location.href = "dashboard_profissional.html";
+      } else {
+        window.location.href = "dashboard_paciente.html";
+      }
+    }, 800);
+  } catch (error) {
+    mostrarMensagem("E-mail ou senha inválidos", "erro");
+    console.error(error);
   }
-
-  localStorage.setItem("logado", "true");
-
-  localStorage.setItem("usuarioCPF", usuario.cpf);
-  localStorage.setItem("usuarioNome", usuario.nome);
-  localStorage.setItem("tipoEscolhido", usuario.tipo);
-
-  mostrarMensagem("Login realizado!", "sucesso");
-
-  setTimeout(() => {
-
-    if (usuario.tipo === "profissional") {
-      window.location.href =
-        "dashboard_profissional.html";
-    } else {
-      window.location.href =
-        "dashboard_paciente.html";
-    }
-
-  }, 800);
 }
 
 // =============================
 // VERIFICA LOGIN
 // =============================
-function verificarLogin() {
+async function verificarLogin() {
+  await window.firebaseService.authReady;
 
-  if (
-    localStorage.getItem("logado") !== "true"
-  ) {
-
+  if (!window.firebaseService.user) {
     window.location.href = "index.html";
-
+    return false;
   }
 
+  appState.currentUser = window.firebaseService.user;
+  appState.currentProfile = await window.firebaseService.getUserDocByUid(appState.currentUser.uid);
+  await carregarUsuarios();
+  await carregarConsultas();
+
+  return true;
 }
 
 // =============================
 // VERIFICA PERFIL
 // =============================
-function verificarPerfil(tipoEsperado) {
-  verificarLogin();
+async function verificarPerfil(tipoEsperado) {
+  const loggedIn = await verificarLogin();
+  if (!loggedIn) return;
 
-  const tipo = localStorage.getItem("tipoEscolhido");
+  const tipo = appState.currentProfile?.tipo;
   const permitido = Array.isArray(tipoEsperado)
     ? tipoEsperado.includes(tipo)
     : tipo === tipoEsperado;
@@ -280,38 +311,30 @@ function verificarPerfil(tipoEsperado) {
 // =============================
 // LOGOUT
 // =============================
-function logout() {
-
-  const confirmar =
-    confirm("Deseja realmente sair?");
-
+async function logout() {
+  const confirmar = confirm("Deseja realmente sair?");
   if (!confirmar) return;
 
-  localStorage.removeItem("logado");
+  try {
+    await window.firebaseService.signOut();
+    appState.currentUser = null;
+    appState.currentProfile = null;
+    mostrarMensagem("Logout realizado!", "sucesso");
 
-  localStorage.removeItem("usuarioCPF");
-  localStorage.removeItem("usuarioNome");
-  localStorage.removeItem("tipoEscolhido");
-
-  mostrarMensagem(
-    "Logout realizado!",
-    "sucesso"
-  );
-
-  setTimeout(() => {
-    window.location.href = "index.html";
-  }, 500);
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 500);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem("Erro ao sair. Tente novamente.", "erro");
+  }
 }
 
 // =============================
 // PRIMEIRO ACESSO
 // =============================
 function primeiroAcesso(tipo) {
-
-  localStorage.setItem(
-    "tipoEscolhido",
-    tipo
-  );
+  window.tipoEscolhido = tipo;
 
   const areaLogin =
     document.getElementById("areaLogin");
@@ -399,38 +422,35 @@ function voltarLogin() {
   }
 
   atualizarCamposPrimeiroAcesso(
-    localStorage.getItem("tipoEscolhido") ||
-    "paciente"
+    getTipoEscolhido()
   );
 }
 
 // =============================
 // CADASTRO
 // =============================
-function cadastrar() {
-
-  const tipo =
-    localStorage.getItem("tipoEscolhido") ||
-    "paciente";
+async function cadastrar() {
+  const tipo = getTipoEscolhido() || "paciente";
 
   const usuario = {
     nome: obterValor("nomeCadastro"),
+    email: obterValor("emailCadastro"),
     cpf: limparCPF(obterValor("cpfCadastro")),
     telefone: obterValor("telefoneCadastro"),
-    senha: obterValor("senhaCadastro"),
+    password: obterValor("senhaCadastro"),
     tipo: tipo
   };
 
   if (
     !usuario.nome ||
     !usuario.cpf ||
-    !usuario.senha
+    !usuario.password ||
+    !usuario.email
   ) {
     mostrarMensagem(
-      "Preencha nome, CPF e senha",
+      "Preencha nome, e-mail, CPF e senha",
       "erro"
     );
-
     return;
   }
 
@@ -439,128 +459,97 @@ function cadastrar() {
     return;
   }
 
-  const usuarios = obterStorage("usuarios");
+  const existeCpf = await window.firebaseService.getUserDocByCpf(usuario.cpf);
 
-  const existe = usuarios.find(
-    u => u.cpf === usuario.cpf
-  );
-
-  if (existe) {
+  if (existeCpf) {
     mostrarMensagem(
       "CPF já cadastrado",
       "erro"
     );
-
     return;
   }
 
-  // CAMPOS PACIENTE
   if (tipo === "paciente") {
-
     usuario.sexo = obterValor("sexoCadastro");
     usuario.estadoCivil = obterValor("estadoCivilCadastro");
     usuario.data = obterValor("dataCadastro");
-
     usuario.estado = obterValor("estadoCadastro");
     usuario.cidade = obterValor("cidadeCadastro");
-
     usuario.bairro = obterValor("bairroCadastro");
     usuario.rua = obterValor("ruaCadastro");
     usuario.numero = obterValor("numeroCadastro");
   }
 
-  // CAMPOS PROFISSIONAL
   if (tipo === "profissional") {
-
     usuario.cargo =
       obterValor("funcaoProfissionalCadastro") ||
       obterValor("cargoProfissionalCadastro");
-
     usuario.registroProfissional =
       obterValor("registroProfissionalCadastro");
-
     usuario.unidade =
       obterValor("unidadeCadastro");
 
-    if (
-      (!usuario.cargo || !usuario.registroProfissional)
-    ) {
+    if (!usuario.cargo || !usuario.registroProfissional) {
       mostrarMensagem(
         "Preencha funcao e registro",
         "erro"
       );
-
       return;
     }
   }
 
-  usuarios.push(usuario);
+  try {
+    const perfil = await window.firebaseService.signUp(usuario);
+    appState.usuarios.push(perfil);
+    mostrarMensagem(
+      "Cadastro realizado com sucesso!",
+      "sucesso"
+    );
 
-  salvarStorage("usuarios", usuarios);
-
-  mostrarMensagem(
-    "Cadastro realizado com sucesso!",
-    "sucesso"
-  );
-
-  setTimeout(() => {
-    voltarLogin();
-  }, 1000);
+    setTimeout(() => {
+      voltarLogin();
+    }, 1000);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem(
+      "Erro no cadastro. Verifique os dados e tente novamente.",
+      "erro"
+    );
+  }
 }
 
 // =============================
 // RECUPERAR SENHA
 // =============================
-function recuperarSenha() {
+async function recuperarSenha() {
+  const email = obterValor("emailRecuperar");
 
-  const cpf =
-    limparCPF(obterValor("cpfRecuperar"));
-
-  const novaSenha =
-    obterValor("novaSenha");
-
-  if (!cpf || !novaSenha) {
-
+  if (!email) {
     mostrarMensagem(
-      "Preencha os campos",
+      "Preencha o e-mail para recuperar a senha",
       "erro"
     );
-
     return;
   }
 
-  const usuarios = obterStorage("usuarios");
-
-  const usuario =
-    usuarios.find(u => u.cpf === cpf);
-
-  if (!usuario) {
-
+  try {
+    await window.firebaseService.sendPasswordReset(email);
     mostrarMensagem(
-      "CPF não encontrado",
+      "Enviamos um link de recuperação para o seu e-mail.",
+      "sucesso"
+    );
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem(
+      "Não foi possível enviar o e-mail de recuperação.",
       "erro"
     );
-
-    return;
   }
-
-  usuario.senha = novaSenha;
-
-  salvarStorage("usuarios", usuarios);
-
-  mostrarMensagem(
-    "Senha atualizada!",
-    "sucesso"
-  );
-}
-
-// =============================
 // SALVAR REGISTRO
 // =============================
-function salvarRegistro() {
+async function salvarRegistro() {
 
-  const sistolica =
-    Number(obterValor("pressao_sistolica"));
+  const sistolica = Number(obterValor("pressao_sistolica"));
 
   const diastolica =
     Number(obterValor("pressao_diastolica"));
@@ -608,10 +597,9 @@ function salvarRegistro() {
     return;
   }
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
 
-  if (!cpf) {
+  if (!usuario) {
     mostrarMensagem(
       "Usuário não identificado",
       "erro"
@@ -633,24 +621,25 @@ function salvarRegistro() {
     sintomas
   };
 
-  const chave = "historico_" + cpf;
-
-  let historico =
-    obterStorage(chave);
+  const chave = "historico_" + usuario.cpf;
+  let historico = await carregarHistorico(usuario.cpf);
 
   if (editandoIndex !== null) {
+    const registroExistente = historico[editandoIndex] || {};
+    registro.__docId = registroExistente.__docId;
+
+    if (registro.__docId) {
+      await window.firebaseService.updateHistorico(registro.__docId, registro);
+    }
 
     historico[editandoIndex] = registro;
-
     editandoIndex = null;
-
   } else {
-
-    historico.push(registro);
+    const novoRegistro = await window.firebaseService.addHistorico(usuario.uid, registro);
+    historico.push(novoRegistro);
   }
 
-  salvarStorage(chave, historico);
-
+  appState.historicos[usuario.cpf] = historico;
   limparCampos();
 
   mostrarMensagem(
@@ -658,14 +647,14 @@ function salvarRegistro() {
     "sucesso"
   );
 
-  atualizarCards();
-  mostrarHistorico();
+  await atualizarCards();
+  await mostrarHistorico();
   desenharGrafico();
   atualizarStatusPaciente(
-  sistolica,
-  diastolica,
-  glicemia
-);
+    sistolica,
+    diastolica,
+    glicemia
+  );
 }
 
 // =============================
@@ -695,44 +684,23 @@ function limparCampos() {
 // =============================
 // EDITAR REGISTRO
 // =============================
-function editarRegistro(index) {
+async function editarRegistro(index) {
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) return;
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
-
-  const historico =
-    obterStorage("historico_" + cpf);
-
+  const historico = await carregarHistorico(usuario.cpf);
   const item = historico[index];
-
   if (!item) return;
 
-  document.getElementById(
-    "pressao_sistolica"
-  ).value = item.sistolica;
-
-  document.getElementById(
-    "pressao_diastolica"
-  ).value = item.diastolica;
-
-  document.getElementById(
-    "glicemia"
-  ).value = item.glicemia;
-
-  document.getElementById(
-    "medicamentos"
-  ).value = item.medicamentos;
-
-  document.getElementById(
-    "sintomas"
-  ).value = item.sintomas;
+  document.getElementById("pressao_sistolica").value = item.sistolica;
+  document.getElementById("pressao_diastolica").value = item.diastolica;
+  document.getElementById("glicemia").value = item.glicemia;
+  document.getElementById("medicamentos").value = item.medicamentos;
+  document.getElementById("sintomas").value = item.sintomas;
 
   editandoIndex = index;
 
-  mostrarMensagem(
-    "Editando registro",
-    "aviso"
-  );
+  mostrarMensagem("Editando registro", "aviso");
 }
 
 // =============================
@@ -753,26 +721,21 @@ function cancelarEdicao() {
 // =============================
 // HISTÃ“RICO
 // =============================
-function mostrarHistorico() {
-
-  const historicoDiv =
-    document.getElementById("historico");
-
+async function mostrarHistorico() {
+  const historicoDiv = document.getElementById("historico");
   if (!historicoDiv) return;
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) {
+    historicoDiv.innerHTML = "<p>Usuário não identificado.</p>";
+    return;
+  }
 
-  const historico =
-    obterStorage("historico_" + cpf);
-
+  const historico = await carregarHistorico(usuario.cpf);
   historicoDiv.innerHTML = "";
 
   if (historico.length === 0) {
-
-    historicoDiv.innerHTML =
-      "<p>Nenhum registro encontrado.</p>";
-
+    historicoDiv.innerHTML = "<p>Nenhum registro encontrado.</p>";
     return;
   }
 
@@ -946,8 +909,7 @@ function atualizarStatusPaciente(
 }
 
 function obterUltimoRegistroPaciente(cpf) {
-  const historico =
-    obterStorage("historico_" + cpf);
+  const historico = appState.historicos[cpf] || [];
 
   if (historico.length === 0) {
     return null;
@@ -1089,7 +1051,7 @@ function ordenarPacientesPorGravidade(pacientes) {
 // =============================
 // EXCLUIR REGISTRO
 // =============================
-function excluirRegistro(index) {
+async function excluirRegistro(index) {
 
   const confirmar = confirm(
     "Deseja excluir este registro?"
@@ -1097,28 +1059,24 @@ function excluirRegistro(index) {
 
   if (!confirmar) return;
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) return;
 
-  let historico =
-    obterStorage("historico_" + cpf);
+  let historico = await carregarHistorico(usuario.cpf);
+  const item = historico[index];
+  if (!item || !item.__docId) return;
 
+  await window.firebaseService.deleteHistoricoById(item.__docId);
   historico.splice(index, 1);
-
-  salvarStorage(
-    "historico_" + cpf,
-    historico
-  );
+  appState.historicos[usuario.cpf] = historico;
 
   mostrarMensagem(
-    "Registro excluÃ­do!",
+    "Registro excluído!",
     "aviso"
   );
 
-  mostrarHistorico();
-
-  atualizarCards();
-
+  await mostrarHistorico();
+  await atualizarCards();
   desenharGrafico();
 }
 
@@ -1156,28 +1114,16 @@ window.onload = function(){
 // =============================
 // LISTAR PACIENTES
 // =============================
-function mostrarPacientes() {
-
-  const div =
-    document.getElementById(
-      "listaPacientes"
-    );
-
+async function mostrarPacientes() {
+  const div = document.getElementById("listaPacientes");
   if (!div) return;
 
-  const usuarios =
-    obterStorage("usuarios");
+  const usuarios = await carregarUsuarios();
+  const pacientes = usuarios.filter(u => String(u.tipo).toLowerCase().trim() === "paciente");
 
-  const pacientes =
-    usuarios.filter(u => {
-
-      return (
-        String(u.tipo)
-          .toLowerCase()
-          .trim() === "paciente"
-      );
-
-    });
+  for (const paciente of pacientes) {
+    await carregarHistorico(paciente.cpf);
+  }
 
   ordenarPacientesPorGravidade(pacientes);
 
@@ -1373,15 +1319,11 @@ div.appendChild(card);
 // =============================
 // ATUALIZAR CARDS
 // =============================
-function atualizarCards() {
+async function atualizarCards() {
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) return;
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
-
-  if (!cpf) return;
-
-  const historico =
-    obterStorage("historico_" + cpf);
+  const historico = await carregarHistorico(usuario.cpf);
 
   if (historico.length === 0) {
 
@@ -1432,7 +1374,7 @@ function atualizarCards() {
 // GRÃFICO
 // =============================
 function temaEscuroAtivo() {
-  return localStorage.getItem("temaPainel") === "escuro";
+  return appState.temaPainel === "escuro";
 }
 
 function aplicarTemaPainel() {
@@ -1441,8 +1383,7 @@ function aplicarTemaPainel() {
     document.getElementById("btnAlternarTema")
   ].filter(Boolean);
 
-  const escuro =
-    temaEscuroAtivo();
+  const escuro = temaEscuroAtivo();
 
   document.body.classList.toggle(
     "tema-escuro",
@@ -1463,16 +1404,8 @@ function aplicarTemaPainel() {
 }
 
 function alternarTemaGrafico() {
-  const proximoTema =
-    temaEscuroAtivo()
-      ? "claro"
-      : "escuro";
-
-  localStorage.setItem(
-    "temaPainel",
-    proximoTema
-  );
-
+  const proximoTema = temaEscuroAtivo() ? "claro" : "escuro";
+  appState.temaPainel = proximoTema;
   aplicarTemaPainel();
   desenharGrafico();
 }
@@ -1495,11 +1428,8 @@ function desenharGrafico() {
   const ctx =
     canvas.getContext("2d");
 
-  const cpf =
-    localStorage.getItem("usuarioCPF");
-
-  const historico =
-    obterStorage("historico_" + cpf);
+  const usuario = obterUsuarioLogado();
+  const historico = usuario ? (appState.historicos[usuario.cpf] || []) : [];
 
   const wrapper =
     canvas.parentElement;
@@ -1733,58 +1663,30 @@ function desenharGrafico() {
 // =============================
 // TOTAL PACIENTES EM ALERTA
 // =============================
-function atualizarTotalAlertas() {
-
-  const elemento =
-    document.getElementById(
-      "totalAlertas"
-    );
-
+async function atualizarTotalAlertas() {
+  const elemento = document.getElementById("totalAlertas");
   if (!elemento) return;
 
-  const usuarios =
-    obterStorage("usuarios");
-
-  const pacientes =
-    usuarios.filter(u =>
-      String(u.tipo)
-        .toLowerCase()
-        .trim() === "paciente"
-    );
+  const usuarios = await carregarUsuarios();
+  const pacientes = usuarios.filter(u => String(u.tipo).toLowerCase().trim() === "paciente");
 
   let total = 0;
 
-  pacientes.forEach(paciente => {
-
-    const historico =
-      obterStorage(
-        "historico_" + paciente.cpf
-      );
+  for (const paciente of pacientes) {
+    const historico = await carregarHistorico(paciente.cpf);
 
     if (historico.length === 0) {
-      return;
+      continue;
     }
 
-    const ultimo =
-      historico[
-        historico.length - 1
-      ];
+    const ultimo = historico[historico.length - 1];
+    const alertaPressao = ultimo.sistolica >= 140 || ultimo.diastolica >= 90;
+    const alertaGlicemia = ultimo.glicemia >= 180;
 
-    const alertaPressao =
-      ultimo.sistolica >= 140 ||
-      ultimo.diastolica >= 90;
-
-    const alertaGlicemia =
-      ultimo.glicemia >= 180;
-
-    if (
-      alertaPressao ||
-      alertaGlicemia
-    ) {
+    if (alertaPressao || alertaGlicemia) {
       total++;
     }
-
-  });
+  }
 
   elemento.innerText = total;
 
@@ -1793,56 +1695,29 @@ function atualizarTotalAlertas() {
 // =============================
 // TOTAL DE PACIENTES
 // =============================
-function atualizarTotalPacientes() {
-
-  const elemento =
-    document.getElementById(
-      "totalPacientes"
-    );
-
+async function atualizarTotalPacientes() {
+  const elemento = document.getElementById("totalPacientes");
   if (!elemento) return;
 
-  const usuarios =
-    obterStorage("usuarios");
-
-  const pacientes =
-    usuarios.filter(u =>
-      String(u.tipo)
-        .toLowerCase()
-        .trim() === "paciente"
-    );
-
-  elemento.innerText =
-    pacientes.length;
+  const usuarios = await carregarUsuarios();
+  const pacientes = usuarios.filter(u => String(u.tipo).toLowerCase().trim() === "paciente");
+  elemento.innerText = pacientes.length;
 }
 
 // =============================
 // ABRIR DETALHES DO PACIENTE
 // =============================
-function abrirDetalhesPaciente(cpf) {
-
-  const box =
-    document.getElementById(
-      "detalhesPaciente"
-    );
-
-  const conteudo =
-    document.getElementById(
-      "conteudoDetalhesPaciente"
-    );
+async function abrirDetalhesPaciente(cpf) {
+  const box = document.getElementById("detalhesPaciente");
+  const conteudo = document.getElementById("conteudoDetalhesPaciente");
 
   if (!box || !conteudo) return;
 
-  const usuarios =
-    obterStorage("usuarios");
-
-  const paciente =
-    usuarios.find(u => u.cpf === cpf);
-
+  const usuarios = await carregarUsuarios();
+  const paciente = usuarios.find(u => u.cpf === cpf);
   if (!paciente) return;
 
-  const historico =
-    obterStorage("historico_" + cpf);
+  const historico = await carregarHistorico(cpf);
 
   let html = `
     <h4 class="text-primary mb-3">
@@ -1953,51 +1828,32 @@ function filtrarPacientesProfissional() {
 // =============================
 // MOSTRAR ALERTAS CRÃTICOS
 // =============================
-function mostrarAlertasCriticos() {
-
-  const div =
-    document.getElementById(
-      "alertas"
-    );
-
+async function mostrarAlertasCriticos() {
+  const div = document.getElementById("alertas");
   if (!div) return;
 
-  const usuarios =
-    obterStorage("usuarios");
-
-  const pacientes =
-    usuarios.filter(u =>
-      String(u.tipo)
-        .toLowerCase()
-        .trim() === "paciente"
-    );
+  const usuarios = await carregarUsuarios();
+  const pacientes = usuarios.filter(u => String(u.tipo).toLowerCase().trim() === "paciente");
 
   div.innerHTML = "";
 
   let encontrou = false;
 
-  pacientes.forEach(paciente => {
-
-    const historico =
-      obterStorage(
-        "historico_" + paciente.cpf
-      );
+  for (const paciente of pacientes) {
+    const historico = await carregarHistorico(paciente.cpf);
 
     if (historico.length === 0) {
-      return;
+      continue;
     }
 
-    const ultimo =
-      historico[
-        historico.length - 1
-      ];
+    const ultimo = historico[historico.length - 1];
 
     const critico =
       ultimo.sistolica >= 180 ||
       ultimo.diastolica >= 120 ||
       ultimo.glicemia >= 300;
 
-    if (!critico) return;
+    if (!critico) continue;
 
     encontrou = true;
 
@@ -2047,8 +1903,7 @@ function mostrarAlertasCriticos() {
 };
 
     div.appendChild(card);
-
-  });
+  }
 
   if (!encontrou) {
 
@@ -2064,7 +1919,7 @@ function mostrarAlertasCriticos() {
 // =============================
 // EXCLUIR PACIENTE
 // =============================
-function excluirPaciente(cpf) {
+async function excluirPaciente(cpf) {
 
   const confirmar = confirm(
     "Deseja excluir este paciente?"
@@ -2072,50 +1927,34 @@ function excluirPaciente(cpf) {
 
   if (!confirmar) return;
 
-  let usuarios =
-    obterStorage("usuarios");
+  const usuario = await window.firebaseService.getUserDocByCpf(cpf);
+  if (usuario && usuario.uid) {
+    await window.firebaseService.deleteHistoricosByUsuarioId(usuario.uid);
+    await window.firebaseService.deleteConsultasByUsuarioId(usuario.uid);
+    await window.firebaseService.deleteUser(usuario.uid);
+  }
 
-  usuarios = usuarios.filter(
-    u => u.cpf !== cpf
-  );
-
-  salvarStorage(
-    "usuarios",
-    usuarios
-  );
-
-  // remove histÃ³rico
-  localStorage.removeItem(
-    "historico_" + cpf
-  );
+  const usuarios = await carregarUsuarios();
+  const restante = usuarios.filter(u => u.cpf !== cpf);
+  appState.usuarios = restante;
 
   mostrarMensagem(
-    "Paciente excluÃ­do!",
+    "Paciente excluído!",
     "aviso"
   );
 
-  mostrarPacientes();
-
-  atualizarTotalPacientes();
-
-  atualizarTotalAlertas();
-
-  mostrarAlertasCriticos();
+  await mostrarPacientes();
+  await atualizarTotalPacientes();
+  await atualizarTotalAlertas();
+  await mostrarAlertasCriticos();
 }
 
 // =============================
 // EDITAR PACIENTE
 // =============================
-function editarPaciente(cpf) {
-
-  let usuarios =
-    obterStorage("usuarios");
-
-  const paciente =
-    usuarios.find(
-      u => u.cpf === cpf
-    );
-
+async function editarPaciente(cpf) {
+  const usuarios = await carregarUsuarios();
+  const paciente = usuarios.find(u => u.cpf === cpf);
   if (!paciente) return;
 
   const novoNome = prompt(
@@ -2130,16 +1969,17 @@ function editarPaciente(cpf) {
     paciente.telefone || ""
   );
 
-  paciente.nome =
-    novoNome;
+  paciente.nome = novoNome;
+  paciente.telefone = novoTelefone;
 
-  paciente.telefone =
-    novoTelefone;
+  if (paciente.uid) {
+    await window.firebaseService.updateUserDoc(paciente.uid, {
+      nome: paciente.nome,
+      telefone: paciente.telefone
+    });
+  }
 
-  salvarStorage(
-    "usuarios",
-    usuarios
-  );
+  appState.usuarios = usuarios;
 
   mostrarMensagem(
     "Paciente atualizado!",
@@ -2147,59 +1987,48 @@ function editarPaciente(cpf) {
   );
 
   mostrarPacientes();
-
   abrirDetalhesPaciente(cpf);
 }
 
 // =============================
 // AGENDAR CONSULTA
 // =============================
-function agendarConsulta() {
-
-  const data =
-    document.getElementById("dataConsulta").value;
-
-  const hora =
-    document.getElementById("horaConsulta").value;
+async function agendarConsulta() {
+  const data = document.getElementById("dataConsulta").value;
+  const hora = document.getElementById("horaConsulta").value;
 
   if (!data || !hora) {
-
     mostrarMensagem(
-      "Escolha data e horÃ¡rio",
+      "Escolha data e horário",
       "erro"
     );
-
     return;
   }
 
-  const consultas =
-    obterStorage("consultas");
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) {
+    mostrarMensagem("Usuário não identificado", "erro");
+    return;
+  }
 
-  consultas.push({
-
-    pacienteCPF:
-      localStorage.getItem("usuarioCPF"),
-
-    pacienteNome:
-      localStorage.getItem("usuarioNome"),
-
+  const consulta = {
+    pacienteId: usuario.uid,
+    pacienteNome: usuario.nome,
+    profissionalId: "",
     data,
     hora,
     status: "Pendente"
+  };
 
-  });
-
-  salvarStorage(
-    "consultas",
-    consultas
-  );
+  const novaConsulta = await window.firebaseService.addConsulta(consulta);
+  appState.consultas.push(novaConsulta);
 
   mostrarMensagem(
     "Consulta agendada!",
     "sucesso"
   );
 
-  mostrarConsultas();
+  await mostrarConsultas();
 }
 
 function formatarDataConsulta(data) {
@@ -2248,27 +2077,15 @@ function montarStatusConsulta(status) {
 // =============================
 // MOSTRAR CONSULTAS PACIENTE
 // =============================
-function mostrarConsultas() {
-
-  const div =
-    document.getElementById(
-      "listaConsultas"
-    );
-
+async function mostrarConsultas() {
+  const div = document.getElementById("listaConsultas");
   if (!div) return;
 
-  const cpf =
-    localStorage.getItem(
-      "usuarioCPF"
-    );
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) return;
 
-  const consultas =
-    obterStorage("consultas");
-
-  const minhasConsultas =
-    consultas.filter(c =>
-      c.pacienteCPF === cpf
-    );
+  const consultas = await carregarConsultas();
+  const minhasConsultas = consultas.filter(c => c.pacienteId === usuario.uid);
 
   div.innerHTML = "";
 
@@ -2315,18 +2132,14 @@ function mostrarConsultas() {
 // =============================
 // CONSULTAS PROFISSIONAL
 // =============================
-function mostrarConsultasProfissional() {
-
-  const div =
-    document.getElementById(
-      "listaConsultasProfissional"
-    );
-
+async function mostrarConsultasProfissional() {
+  const div = document.getElementById("listaConsultasProfissional");
   if (!div) return;
 
-  const consultas =
-    obterStorage("consultas");
+  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  if (!usuario) return;
 
+  const consultas = await carregarConsultas();
   div.innerHTML = "";
 
   if (consultas.length === 0) {
@@ -2372,21 +2185,18 @@ function mostrarConsultasProfissional() {
     btnConfirmar.innerText =
       "Confirmar";
 
-    btnConfirmar.onclick = () => {
+    btnConfirmar.onclick = async () => {
+      const consulta = consultas[index];
+      if (!consulta || !consulta.__docId) return;
 
-      consultas[index].status =
-        "Confirmada";
-      consultas[index].profissionalCPF =
-        localStorage.getItem("usuarioCPF");
-      consultas[index].profissionalNome =
-        localStorage.getItem("usuarioNome");
+      await window.firebaseService.updateConsulta(consulta.__docId, {
+        status: "Confirmada",
+        profissionalId: usuario.uid,
+        profissionalNome: usuario.nome
+      });
 
-      salvarStorage(
-        "consultas",
-        consultas
-      );
-
-      mostrarConsultasProfissional();
+      await carregarConsultas();
+      await mostrarConsultasProfissional();
     };
 
     // BOTÃƒO CANCELAR
@@ -2399,17 +2209,16 @@ function mostrarConsultasProfissional() {
     btnCancelar.innerText =
       "Cancelar";
 
-    btnCancelar.onclick = () => {
+    btnCancelar.onclick = async () => {
+      const consulta = consultas[index];
+      if (!consulta || !consulta.__docId) return;
 
-      consultas[index].status =
-        "Cancelada";
+      await window.firebaseService.updateConsulta(consulta.__docId, {
+        status: "Cancelada"
+      });
 
-      salvarStorage(
-        "consultas",
-        consultas
-      );
-
-      mostrarConsultasProfissional();
+      await carregarConsultas();
+      await mostrarConsultasProfissional();
     };
 
     const areaBotoes =
@@ -2508,14 +2317,12 @@ function mostrarSecao(id){
 }
 
 function obterUsuarioLogado() {
-  const cpf = localStorage.getItem("usuarioCPF");
-  const usuarios = obterStorage("usuarios");
-
-  return usuarios.find(u => u.cpf === cpf) || null;
+  return appState.currentProfile || null;
 }
 
 function usuarioEhAdmin() {
-  return localStorage.getItem("tipoEscolhido") === "profissional";
+  const usuario = obterUsuarioLogado();
+  return usuario && usuario.tipo === "profissional";
 }
 
 function montarEndereco(usuario) {
@@ -2544,12 +2351,16 @@ function montarAvatar(usuario) {
 }
 
 function obterConsultasDoPaciente(cpf) {
-  return obterStorage("consultas").filter(c => c.pacienteCPF === cpf);
+  const usuario = appState.usuarios.find(u => u.cpf === cpf);
+  if (!usuario) return [];
+  return appState.consultas.filter(c => c.pacienteId === usuario.uid);
 }
 
 function obterAtendimentosDoProfissional(cpf) {
-  return obterStorage("consultas").filter(c =>
-    c.profissionalCPF === cpf ||
+  const usuario = appState.usuarios.find(u => u.cpf === cpf);
+  if (!usuario) return [];
+  return appState.consultas.filter(c =>
+    c.profissionalId === usuario.uid ||
     c.status === "Confirmada"
   );
 }
@@ -2575,95 +2386,83 @@ function preencherFormularioPerfil(usuario) {
   });
 }
 
-function renderizarMeuPerfil() {
+async function renderizarMeuPerfil() {
   const box = document.getElementById("meuPerfilConteudo");
   if (!box) return;
 
   const usuario = obterUsuarioLogado();
-  if (!usuario) return;
+  if (!usuario) {
+    box.innerHTML = '<p>Não há usuário logado.</p>';
+    return;
+  }
 
-  const tipo = usuario.tipo || localStorage.getItem("tipoEscolhido");
-  const historico = obterStorage("historico_" + usuario.cpf);
-  const consultas = obterConsultasDoPaciente(usuario.cpf);
-  const atendimentos = tipo === "paciente"
-    ? historico
-    : obterAtendimentosDoProfissional(usuario.cpf);
+  const tipo = usuario.tipo;
+  const consultas = tipo === "paciente" ? obterConsultasDoPaciente(usuario.cpf) : obterAtendimentosDoProfissional(usuario.cpf);
+  const historico = appState.historicos[usuario.cpf] || [];
 
-  box.innerHTML = `
-    <div class="perfil-grid">
-      <aside class="perfil-resumo">
-        <div class="perfil-avatar">${montarAvatar(usuario)}</div>
-        <label class="btn btn-outline-primary btn-sm mt-3">
-          Alterar foto
-          <input type="file" accept="image/*" hidden onchange="alterarFotoPerfil(this)">
-        </label>
-        <h4>${escaparHTML(usuario.nome || "Usuário")}</h4>
-        <p>${escaparHTML(tipo === "profissional" ? (usuario.cargo || "Profissional de saúde") : "Paciente")}</p>
-      </aside>
+  const consultasHtml = consultas.length
+    ? consultas.map(c => `${formatarDataConsulta(c.data)} às ${c.hora} - ${c.status}`).join("<br>")
+    : "Nenhuma consulta agendada.";
 
-      <div class="perfil-detalhes">
-        <div class="perfil-campos">
-          <label>Nome completo<input id="perfilNome" class="form-control"></label>
-          ${tipo === "paciente" ? `<label>Data de nascimento<input id="perfilNascimento" type="date" class="form-control"></label>` : ""}
-          <label>CPF<input id="perfilCpf" class="form-control" disabled></label>
-          ${tipo === "paciente" ? `<label>Endereço<input id="perfilEndereco" class="form-control"></label>` : ""}
-          <label>Telefone<input id="perfilTelefone" class="form-control"></label>
-          <label>E-mail<input id="perfilEmail" type="email" class="form-control"></label>
-          ${tipo !== "paciente" ? `<label>Cargo/função<input id="perfilCargo" class="form-control"></label>` : ""}
-          ${tipo !== "paciente" ? `<label>Registro profissional<input id="perfilRegistro" class="form-control"></label>` : ""}
-          ${tipo !== "paciente" ? `<label>Especialidade<input id="perfilEspecialidade" class="form-control"></label>` : ""}
-          ${tipo === "paciente" ? `<label class="perfil-span">Informações de saúde cadastradas<textarea id="perfilSaude" class="form-control" rows="3"></textarea></label>` : ""}
-          ${tipo === "paciente" ? `<label class="perfil-span">Exames registrados<textarea id="perfilExames" class="form-control" rows="3"></textarea></label>` : ""}
-        </div>
+  let html = '';
 
-        <button class="btn btn-primary mt-3" onclick="salvarMeuPerfil()">Salvar alterações</button>
+  html += '<div class="perfil-header">';
+  html += '<div class="perfil-avatar">' + montarAvatar(usuario) + '</div>';
+  html += '<div class="perfil-detalhes">';
+  html += `<h3>${escaparHTML(usuario.nome || "-")}</h3>`;
+  html += `<p><strong>CPF:</strong> ${formatarCPF(usuario.cpf || "")}</p>`;
+  html += `<p><strong>Role:</strong> ${escaparHTML(tipo === "paciente" ? "Paciente" : "Profissional")}</p>`;
+  html += '</div>';
+  html += '</div>';
 
-        <div class="perfil-historicos">
-          ${tipo === "paciente" ? `
-            <div><strong>Histórico de consultas</strong><p>${consultas.length ? consultas.map(c => `${formatarDataConsulta(c.data)} às ${c.hora} - ${c.status}`).join("<br>") : "Nenhuma consulta agendada."}</p></div>
-            <div><strong>Histórico de atendimentos</strong><p>${historico.length ? historico.length + " registro(s) de acompanhamento." : "Nenhum atendimento registrado."}</p></div>
-            <div><strong>Exames registrados</strong><p>${usuario.exames || "Nenhum exame registrado."}</p></div>
-          ` : `
-            <div><strong>Histórico de atendimentos realizados</strong><p>${atendimentos.length ? atendimentos.length + " atendimento(s) registrado(s)." : "Nenhum atendimento registrado."}</p></div>
-          `}
-        </div>
-      </div>
-    </div>
-  `;
+  if (tipo === "paciente") {
+    html += '<div class="perfil-card">';
+    html += `<p><strong>Telefone:</strong> ${escaparHTML(usuario.telefone || "Não informado")}</p>`;
+    html += `<p><strong>Endereço:</strong> ${escaparHTML(montarEndereco(usuario))}</p>`;
+    html += `<p><strong>Histórico:</strong> ${historico.length ? historico.map(h => escaparHTML(h.descricao)).join("<br>") : "Nenhum histórico registrado."}</p>`;
+    html += `<p><strong>Consultas:</strong><br>${consultasHtml}</p>`;
+    html += '</div>';
+  } else {
+    html += '<div class="perfil-card">';
+    html += `<p><strong>Registro:</strong> ${escaparHTML(usuario.registroProfissional || "Não informado")}</p>`;
+    html += `<p><strong>Especialidade:</strong> ${escaparHTML(usuario.especialidade || "Não informado")}</p>`;
+    html += `<p><strong>Consultas:</strong><br>${consultasHtml}</p>`;
+    html += '</div>';
+  }
 
-  preencherFormularioPerfil(usuario);
+  box.innerHTML = html;
 }
 
-function salvarMeuPerfil() {
+async function salvarMeuPerfil() {
   const usuario = obterUsuarioLogado();
   if (!usuario) return;
 
-  const usuarios = obterStorage("usuarios");
-  const alvo = usuarios.find(u => u.cpf === usuario.cpf);
-  if (!alvo) return;
+  const dadosAtualizados = {
+    nome: obterValor("perfilNome") || usuario.nome,
+    telefone: obterValor("perfilTelefone"),
+    email: obterValor("perfilEmail") || usuario.email
+  };
 
-  alvo.nome = obterValor("perfilNome") || alvo.nome;
-  alvo.telefone = obterValor("perfilTelefone");
-  alvo.email = obterValor("perfilEmail");
-
-  if (alvo.tipo === "paciente") {
-    alvo.data = obterValor("perfilNascimento");
-    alvo.informacoesSaude = obterValor("perfilSaude");
-    alvo.exames = obterValor("perfilExames");
-    alvo.enderecoLivre = obterValor("perfilEndereco");
+  if (usuario.tipo === "paciente") {
+    dadosAtualizados.data = obterValor("perfilNascimento");
+    dadosAtualizados.informacoesSaude = obterValor("perfilSaude");
+    dadosAtualizados.exames = obterValor("perfilExames");
+    dadosAtualizados.enderecoLivre = obterValor("perfilEndereco");
   } else {
-    alvo.cargo = obterValor("perfilCargo");
-    alvo.registroProfissional = obterValor("perfilRegistro");
-    alvo.especialidade = obterValor("perfilEspecialidade");
+    dadosAtualizados.cargo = obterValor("perfilCargo");
+    dadosAtualizados.registroProfissional = obterValor("perfilRegistro");
+    dadosAtualizados.especialidade = obterValor("perfilEspecialidade");
   }
 
-  salvarStorage("usuarios", usuarios);
-  localStorage.setItem("usuarioNome", alvo.nome);
+  const atualizado = await window.firebaseService.updateUserDoc(usuario.uid, dadosAtualizados);
+  appState.currentProfile = atualizado;
+  appState.usuarios = await carregarUsuarios();
+
   mostrarMensagem("Perfil atualizado!", "sucesso");
   renderizarMeuPerfil();
 }
 
-function alterarFotoPerfil(input) {
+async function alterarFotoPerfil(input) {
   const arquivo = input.files && input.files[0];
   if (!arquivo) return;
 
@@ -2672,66 +2471,51 @@ function alterarFotoPerfil(input) {
     return;
   }
 
-  const leitor = new FileReader();
-  leitor.onload = () => {
-    const usuario = obterUsuarioLogado();
-    const usuarios = obterStorage("usuarios");
-    const alvo = usuario && usuarios.find(u => u.cpf === usuario.cpf);
+  const usuario = obterUsuarioLogado();
+  if (!usuario) return;
 
-    if (!alvo) return;
-
-    alvo.fotoPerfil = leitor.result;
-    salvarStorage("usuarios", usuarios);
+  try {
+    const url = await window.firebaseService.uploadProfilePhoto(usuario.uid, arquivo);
+    appState.currentProfile.fotoPerfil = url;
+    appState.usuarios = await carregarUsuarios();
     mostrarMensagem("Foto atualizada!", "sucesso");
     renderizarMeuPerfil();
-  };
-  leitor.readAsDataURL(arquivo);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem("Falha ao enviar a foto. Tente novamente.", "erro");
+  }
 }
 
-function salvarEdicaoPaciente() {
+async function salvarEdicaoPaciente() {
   const cpf = document.getElementById("editCpf").value;
   const nome = document.getElementById("editNome").value;
   const telefone = document.getElementById("editTelefone").value;
 
-  let usuarios = obterStorage("usuarios");
-
+  const usuarios = await carregarUsuarios();
   const paciente = usuarios.find(u => u.cpf === cpf);
 
   if (!paciente) return;
 
-  paciente.nome = nome;
-  paciente.telefone = telefone;
-
-  salvarStorage("usuarios", usuarios);
-
-  mostrarMensagem("Paciente atualizado!", "sucesso");
-
-  mostrarPacientes();
-
-  const modal = bootstrap.Modal.getInstance(document.getElementById("modalEditarPaciente"));
-  modal.hide();
-}
-
-window.addEventListener("resize", () => {
-  clearTimeout(window.timerGraficoResponsivo);
-
-  window.timerGraficoResponsivo =
-    setTimeout(desenharGrafico, 120);
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  aplicarTemaPainel();
-  desenharGrafico();
-  renderizarMeuPerfil();
-
-  document.querySelectorAll(".footer").forEach(footer => {
-    footer.innerText = "Programado por @Aimone Souza Silva";
+  const atualizado = await window.firebaseService.updateUserDoc(paciente.uid, {
+    nome,
+    telefone
   });
 
-  if (!document.querySelector(".app-footer") && !document.querySelector(".footer")) {
-    const footer = document.createElement("footer");
-    footer.className = "app-footer";
-    footer.innerText = "Programado por @Aimone Souza Silva";
-    document.body.appendChild(footer);
+  if (appState.currentProfile && appState.currentProfile.cpf === cpf) {
+    appState.currentProfile = atualizado;
   }
-});
+
+  appState.usuarios = await carregarUsuarios();
+
+  mostrarMensagem("Paciente atualizado!", "sucesso");
+  await mostrarPacientes();
+
+  if (window.bootstrap && document.getElementById("modalEditarPaciente")) {
+    const modal = window.bootstrap.Modal.getInstance(document.getElementById("modalEditarPaciente"));
+    if (modal) {
+      modal.hide();
+    }
+  }
+}
+
+

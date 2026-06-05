@@ -227,15 +227,7 @@ body.dashboard-page {
 <div id="mensagem"></div>
 
 <script>
-
-if (localStorage.getItem("logado") !== "true") {
-  window.location.href = "index.html";
-}
-
-if (localStorage.getItem("tipoEscolhido") !== "paciente") {
-  window.location.href = "dashboard_profissional.html";
-}
-
+window.pageRole = "paciente";
 </script>
 
 <div class="dashboard-layout">
@@ -280,6 +272,14 @@ if (localStorage.getItem("tipoEscolhido") !== "paciente") {
       <h3 id="tituloDashboard"></h3>
 
       <div class="dashboard-user">
+        <div class="dashboard-user-profile">
+          <div class="dashboard-user-avatar" id="dashboardAvatarPaciente"></div>
+          <div class="dashboard-user-meta">
+            <strong id="nomeUsuarioTopo">Paciente</strong>
+            <span class="dashboard-user-role">Paciente</span>
+          </div>
+        </div>
+
         <button
           type="button"
           class="theme-toggle"
@@ -459,25 +459,34 @@ if (localStorage.getItem("tipoEscolhido") !== "paciente") {
 <script src="script.js"></script>
 
 <script>
-verificarLogin();
+async function prepararDashboardPaciente() {
+  await window.firebaseService.authReady;
+  verificarLogin();
+  mostrarConsultas();
+  mostrarSecao("inicio");
 
-mostrarConsultas();
-mostrarSecao("inicio");
+  const usuario = obterUsuarioLogado();
+  if (usuario) {
+    const nome = usuario.nome;
+    document.getElementById("tituloDashboard").innerText = "Bem-vindo, " + nome;
+    document.getElementById("nomeUsuario").innerText = nome;
+    const topo = document.getElementById("nomeUsuarioTopo");
+    if (topo) topo.innerText = nome;
+    const avatar = document.getElementById("dashboardAvatarPaciente");
+    if (avatar) {
+      avatar.innerHTML = montarAvatar(usuario);
+    }
+  }
 
-const nome = localStorage.getItem("usuarioNome");
-
-if (nome) {
-  document.getElementById("tituloDashboard").innerText = "Bem-vindo, " + nome;
-  document.getElementById("nomeUsuario").innerText = nome;
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(() => console.log("App pronto"))
+      .catch(() => console.log("Erro no app"));
+  }
 }
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("App pronto"))
-    .catch(() => console.log("Erro no app"));
-}
+prepararDashboardPaciente();
 </script>
-
-
+<footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>

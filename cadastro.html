@@ -142,6 +142,11 @@ body.cadastro-page{
 
 <div id="mensagem"></div>
 
+<script>
+const params = new URLSearchParams(window.location.search);
+window.tipoEscolhido = params.get("tipo") || "paciente";
+</script>
+
 <div class="cadastro-container">
   
   <h4 class="text-center titulo mb-1">Criar Acesso</h4>
@@ -156,6 +161,15 @@ body.cadastro-page{
       id="nomeCadastro" 
       class="form-control" 
       placeholder="Digite seu nome completo">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">E-mail</label>
+    <input 
+      id="emailCadastro"
+      type="email"
+      class="form-control"
+      placeholder="Digite seu e-mail">
   </div>
 
   <div class="mb-3">
@@ -208,6 +222,6 @@ body.cadastro-page{
 </div>
 
 <script src="script.js"></script>
-
+<footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>

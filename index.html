@@ -125,9 +125,7 @@
 
   </div>
 
-  <div class="footer">
-    Descomplica APS • Sistema MVP
-  </div>
+<footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 
 </div>
 
@@ -138,8 +136,7 @@
 
 <script>
 function entrarComo(tipo){
-  localStorage.setItem("tipoEscolhido", tipo);
-  window.location.href = "login.html";
+  window.location.href = `login.html?tipo=${encodeURIComponent(tipo)}`;
 }
 </script>
 <script src="script.js"></script>

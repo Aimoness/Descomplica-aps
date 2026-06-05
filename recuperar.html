@@ -69,43 +69,28 @@ button{
   </p>
 
   <div class="mb-3">
-    <label class="form-label">CPF cadastrado</label>
+    <label class="form-label">E-mail cadastrado</label>
     <input
-      id="cpfRecuperar"
+      id="emailRecuperar"
+      type="email"
       class="form-control"
-      placeholder="000.000.000-00"
-      maxlength="14"
-      inputmode="numeric"
-      oninput="mascaraCPF(this)">
+      placeholder="Digite seu e-mail">
   </div>
 
-  <div class="mb-3">
-    <label class="form-label">Nova senha</label>
-    <div style="position:relative;">
-      <input
-        id="novaSenha"
-        type="password"
-        class="form-control"
-        placeholder="Digite a nova senha"
-        style="padding-right:40px;">
-      <span onclick="toggleSenha('novaSenha')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">&#128065;</span>
-    </div>
-  </div>
-
-  <button class="btn btn-primary w-100 mb-2" onclick="recuperarSenha()">Atualizar senha</button>
+  <button class="btn btn-primary w-100 mb-2" onclick="recuperarSenha()">Enviar link de recuperação</button>
   <a href="login.html" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center">Voltar para login</a>
 </div>
 
 <script src="script.js"></script>
 <script>
-const t = localStorage.getItem("tipoEscolhido");
+const params = new URLSearchParams(window.location.search);
+const t = params.get("tipo") || "paciente";
 const tipoTexto = document.getElementById("tipoEscolhidoTxt");
 
 if (tipoTexto) {
-  tipoTexto.innerText = t
-    ? "Acesso como: " + (t === "profissional" ? "Profissional" : "Paciente")
-    : "Informe seu CPF para redefinir a senha";
+  tipoTexto.innerText = "Acesso como: " + (t === "profissional" ? "Profissional" : "Paciente");
 }
 </script>
+<footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>

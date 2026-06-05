@@ -135,12 +135,14 @@ button{
 <div id="mensagem"></div>
 
 <script>
-const tipo = localStorage.getItem("tipoEscolhido");
+const params = new URLSearchParams(window.location.search);
+const tipo = params.get("tipo") || "paciente";
 
-if (!tipo || !["paciente", "profissional"].includes(tipo)) {
-  localStorage.removeItem("tipoEscolhido");
+if (!["paciente", "profissional"].includes(tipo)) {
   window.location.href = "index.html";
 }
+
+window.tipoEscolhido = tipo;
 </script>
 
 <div class="login-container">
@@ -152,8 +154,8 @@ if (!tipo || !["paciente", "profissional"].includes(tipo)) {
 
   <div id="areaLogin">
     <div class="mb-3">
-      <label class="form-label">CPF</label>
-      <input id="cpf" class="form-control" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="mascaraCPF(this)">
+      <label class="form-label">E-mail</label>
+      <input id="email" type="email" class="form-control" placeholder="Digite seu e-mail">
     </div>
 
     <div class="mb-3">
@@ -169,7 +171,7 @@ if (!tipo || !["paciente", "profissional"].includes(tipo)) {
     </div>
 
     <button class="btn btn-primary w-100 mb-2" onclick="login()">Entrar</button>
-    <button class="btn btn-outline-primary w-100" onclick="primeiroAcesso(localStorage.getItem('tipoEscolhido') || 'paciente')">Primeiro acesso</button>
+    <button class="btn btn-outline-primary w-100" onclick="primeiroAcesso(window.tipoEscolhido || 'paciente')">Primeiro acesso</button>
   </div>
 
   <div id="areaCadastro">
@@ -179,6 +181,11 @@ if (!tipo || !["paciente", "profissional"].includes(tipo)) {
       <div class="col-md-6">
         <label>Nome completo</label>
         <input id="nomeCadastro" class="form-control" placeholder="Digite seu nome completo">
+      </div>
+
+      <div class="col-md-6">
+        <label>E-mail</label>
+        <input id="emailCadastro" type="email" class="form-control" placeholder="Digite seu e-mail">
       </div>
 
       <div class="col-md-3">
@@ -261,7 +268,8 @@ if (!tipo || !["paciente", "profissional"].includes(tipo)) {
 
 <script src="script.js"></script>
 <script>
-const t = localStorage.getItem("tipoEscolhido");
+const paramsLogin = new URLSearchParams(window.location.search);
+const t = paramsLogin.get("tipo") || "paciente";
 const tipoTexto = document.getElementById("tipoEscolhidoTxt");
 
 if (tipoTexto) {
@@ -272,5 +280,6 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 </script>
+<footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>
