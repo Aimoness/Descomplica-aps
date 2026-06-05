@@ -37,7 +37,109 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const analytics = getAnalytics(app);
 
+const localStorageKeys = {
+  usuarios: "local_db_usuarios",
+  historicos: "local_db_historicos",
+  consultas: "local_db_consultas"
+};
+
+function parseLocalData(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data || []));
+}
+
+function generateLocalId(prefix = "local") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function isPermissionDeniedError(error) {
+  if (!error) return false;
+  const msg = String(error.message || "").toLowerCase();
+  return (
+    error?.code === "permission-denied" ||
+    msg.includes("missing or insufficient permissions")
+  );
+}
+
+function getLocalUsers() {
+  return parseLocalData(localStorageKeys.usuarios);
+}
+
+function getLocalHistoricos() {
+  return parseLocalData(localStorageKeys.historicos);
+}
+
+function getLocalConsultas() {
+  return parseLocalData(localStorageKeys.consultas);
+}
+
+function saveLocalUser(user) {
+  const usuarios = getLocalUsers();
+  const index = usuarios.findIndex(u => u.uid === user.uid);
+  if (index !== -1) {
+    usuarios[index] = user;
+  } else {
+    usuarios.push(user);
+  }
+  saveLocalData(localStorageKeys.usuarios, usuarios);
+}
+
+function saveLocalHistorico(registro) {
+  const historicos = getLocalHistoricos();
+  historicos.push(registro);
+  saveLocalData(localStorageKeys.historicos, historicos);
+}
+
+function saveLocalConsulta(consulta) {
+  const consultas = getLocalConsultas();
+  consultas.push(consulta);
+  saveLocalData(localStorageKeys.consultas, consultas);
+}
+
+function deleteLocalHistoricoById(docId) {
+  const historicos = getLocalHistoricos().filter(item => item.__docId !== docId);
+  saveLocalData(localStorageKeys.historicos, historicos);
+}
+
+function updateLocalHistorico(docId, registro) {
+  const historicos = getLocalHistoricos();
+  const index = historicos.findIndex(item => item.__docId === docId);
+  if (index !== -1) {
+    historicos[index] = { __docId: docId, ...registro };
+    saveLocalData(localStorageKeys.historicos, historicos);
+  }
+}
+
+function updateLocalConsulta(docId, data) {
+  const consultas = getLocalConsultas();
+  const index = consultas.findIndex(item => item.__docId === docId);
+  if (index !== -1) {
+    consultas[index] = { __docId: docId, ...data };
+    saveLocalData(localStorageKeys.consultas, consultas);
+  }
+}
+
+function enableLocalMode() {
+  window.firebaseService = window.firebaseService || {};
+  if (window.firebaseService) {
+    window.firebaseService.localMode = true;
+  }
+}
+
 const firebaseService = {
+  auth,
+  db,
+  storage,
+  user: null,
+  profile: null,
+  localMode: false,
   auth,
   db,
   storage,
@@ -103,7 +205,18 @@ const firebaseService = {
       exames: userData.exames || ""
     };
 
-    await setDoc(doc(db, "usuarios", uid), perfil);
+    try {
+      await setDoc(doc(db, "usuarios", uid), perfil);
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        console.warn("Firestore write denied, saving local profile instead.", error);
+        enableLocalMode();
+        saveLocalUser(perfil);
+      } else {
+        throw error;
+      }
+    }
+
     firebaseService.profile = perfil;
     return perfil;
   },
@@ -121,42 +234,94 @@ const firebaseService = {
   },
 
   async getUserDocByUid(uid) {
-    const userDoc = await getDoc(doc(db, "usuarios", uid));
-    if (!userDoc.exists()) return null;
-    return { uid: userDoc.id, ...userDoc.data() };
+    try {
+      const userDoc = await getDoc(doc(db, "usuarios", uid));
+      if (!userDoc.exists()) {
+        const local = getLocalUsers().find(u => u.uid === uid);
+        return local || null;
+      }
+      return { uid: userDoc.id, ...userDoc.data() };
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        return getLocalUsers().find(u => u.uid === uid) || null;
+      }
+      throw error;
+    }
   },
 
   async getUserDocByCpf(cpf) {
-    const usuariosRef = collection(db, "usuarios");
-    const q = query(usuariosRef, where("cpf", "==", cpf));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    const docSnap = querySnapshot.docs[0];
-    return { uid: docSnap.id, ...docSnap.data() };
+    try {
+      const usuariosRef = collection(db, "usuarios");
+      const q = query(usuariosRef, where("cpf", "==", cpf));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return getLocalUsers().find(u => u.cpf === cpf) || null;
+      }
+      const docSnap = querySnapshot.docs[0];
+      return { uid: docSnap.id, ...docSnap.data() };
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        return getLocalUsers().find(u => u.cpf === cpf) || null;
+      }
+      throw error;
+    }
   },
 
   async updateUserDoc(uid, data) {
-    const userDoc = doc(db, "usuarios", uid);
-    await updateDoc(userDoc, data);
-    return await this.getUserDocByUid(uid);
+    try {
+      const userDoc = doc(db, "usuarios", uid);
+      await updateDoc(userDoc, data);
+      return await this.getUserDocByUid(uid);
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        const usuarios = getLocalUsers();
+        const index = usuarios.findIndex(user => user.uid === uid);
+        if (index !== -1) {
+          usuarios[index] = { ...usuarios[index], ...data };
+          saveLocalData(localStorageKeys.usuarios, usuarios);
+          return usuarios[index];
+        }
+        return null;
+      }
+      throw error;
+    }
   },
 
   async getAllUsers() {
-    const usuariosRef = collection(db, "usuarios");
-    const querySnapshot = await getDocs(usuariosRef);
-    return querySnapshot.docs.map(docSnap => ({ uid: docSnap.id, ...docSnap.data() }));
+    try {
+      const usuariosRef = collection(db, "usuarios");
+      const querySnapshot = await getDocs(usuariosRef);
+      return querySnapshot.docs.map(docSnap => ({ uid: docSnap.id, ...docSnap.data() }));
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        return getLocalUsers();
+      }
+      throw error;
+    }
   },
 
   async getHistoricosByUsuarioId(uid) {
-    const historicosRef = collection(db, "historicos");
-    const q = query(historicosRef, where("usuarioId", "==", uid), orderBy("createdAt", "asc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({ __docId: docSnap.id, ...docSnap.data() }));
+    try {
+      const historicosRef = collection(db, "historicos");
+      const q = query(historicosRef, where("usuarioId", "==", uid), orderBy("createdAt", "asc"));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(docSnap => ({ __docId: docSnap.id, ...docSnap.data() }));
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        return getLocalHistoricos().filter(item => item.usuarioId === uid);
+      }
+      throw error;
+    }
   },
 
   async addHistorico(usuarioId, registro) {
-    const historicosRef = collection(db, "historicos");
     const newRecord = {
+      __docId: generateLocalId("hist"),
       usuarioId,
       data: registro.data,
       sistolica: registro.sistolica,
@@ -168,9 +333,19 @@ const firebaseService = {
       createdAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(historicosRef, newRecord);
-    const snapshot = await getDoc(docRef);
-    return { __docId: docRef.id, ...snapshot.data() };
+    try {
+      const historicosRef = collection(db, "historicos");
+      const docRef = await addDoc(historicosRef, newRecord);
+      const snapshot = await getDoc(docRef);
+      return { __docId: docRef.id, ...snapshot.data() };
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        saveLocalHistorico(newRecord);
+        return newRecord;
+      }
+      throw error;
+    }
   },
 
   async updateHistorico(docId, registro) {
@@ -185,23 +360,49 @@ const firebaseService = {
       pressao: registro.pressao || `${registro.sistolica}/${registro.diastolica}`
     };
 
-    await updateDoc(historicoDoc, updateData);
-    return { __docId: docId, ...updateData };
+    try {
+      await updateDoc(historicoDoc, updateData);
+      return { __docId: docId, ...updateData };
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        updateLocalHistorico(docId, updateData);
+        return { __docId: docId, ...updateData };
+      }
+      throw error;
+    }
   },
 
   async deleteHistoricoById(docId) {
-    await deleteDoc(doc(db, "historicos", docId));
+    try {
+      await deleteDoc(doc(db, "historicos", docId));
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        deleteLocalHistoricoById(docId);
+        return;
+      }
+      throw error;
+    }
   },
 
   async getConsultas() {
-    const consultasRef = collection(db, "consultas");
-    const querySnapshot = await getDocs(consultasRef);
-    return querySnapshot.docs.map(docSnap => ({ __docId: docSnap.id, ...docSnap.data() }));
+    try {
+      const consultasRef = collection(db, "consultas");
+      const querySnapshot = await getDocs(consultasRef);
+      return querySnapshot.docs.map(docSnap => ({ __docId: docSnap.id, ...docSnap.data() }));
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        return getLocalConsultas();
+      }
+      throw error;
+    }
   },
 
   async addConsulta(consulta) {
-    const consultasRef = collection(db, "consultas");
     const record = {
+      __docId: generateLocalId("cons"),
       pacienteId: consulta.pacienteId,
       profissionalId: consulta.profissionalId || "",
       pacienteNome: consulta.pacienteNome,
@@ -210,17 +411,46 @@ const firebaseService = {
       status: consulta.status || "Pendente",
       createdAt: serverTimestamp()
     };
-    const docRef = await addDoc(consultasRef, record);
-    const snapshot = await getDoc(docRef);
-    return { __docId: docRef.id, ...snapshot.data() };
+    try {
+      const consultasRef = collection(db, "consultas");
+      const docRef = await addDoc(consultasRef, record);
+      const snapshot = await getDoc(docRef);
+      return { __docId: docRef.id, ...snapshot.data() };
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        saveLocalConsulta(record);
+        return record;
+      }
+      throw error;
+    }
   },
 
   async updateConsulta(docId, data) {
-    await updateDoc(doc(db, "consultas", docId), data);
+    try {
+      await updateDoc(doc(db, "consultas", docId), data);
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        updateLocalConsulta(docId, data);
+        return;
+      }
+      throw error;
+    }
   },
 
   async deleteUser(uid) {
-    await deleteDoc(doc(db, "usuarios", uid));
+    try {
+      await deleteDoc(doc(db, "usuarios", uid));
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        enableLocalMode();
+        const usuarios = getLocalUsers().filter(user => user.uid !== uid);
+        saveLocalData(localStorageKeys.usuarios, usuarios);
+        return;
+      }
+      throw error;
+    }
   },
 
   async uploadProfilePhoto(uid, file) {

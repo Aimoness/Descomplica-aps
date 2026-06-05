@@ -511,8 +511,13 @@ async function cadastrar() {
     }, 1000);
   } catch (error) {
     console.error(error);
+    const mensagemErro = String(error?.message || "");
+    const detalhe = mensagemErro.includes("permissions")
+      ? "Verifique as regras do Firestore no console do Firebase."
+      : "Verifique os dados e tente novamente.";
+
     mostrarMensagem(
-      "Erro no cadastro. Verifique os dados e tente novamente.",
+      `Erro no cadastro. ${detalhe}`,
       "erro"
     );
   }
