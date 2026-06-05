@@ -40,7 +40,8 @@ const analytics = getAnalytics(app);
 const localStorageKeys = {
   usuarios: "local_db_usuarios",
   historicos: "local_db_historicos",
-  consultas: "local_db_consultas"
+  consultas: "local_db_consultas",
+  auth: "local_auth_user"
 };
 
 function parseLocalData(key) {
@@ -126,6 +127,22 @@ function updateLocalConsulta(docId, data) {
   }
 }
 
+function saveLocalAuth(authData) {
+  localStorage.setItem(localStorageKeys.auth, JSON.stringify(authData || null));
+}
+
+function loadLocalAuth() {
+  try {
+    return JSON.parse(localStorage.getItem(localStorageKeys.auth) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function clearLocalAuth() {
+  localStorage.removeItem(localStorageKeys.auth);
+}
+
 function enableLocalMode() {
   window.firebaseService = window.firebaseService || {};
   if (window.firebaseService) {
@@ -140,35 +157,44 @@ const firebaseService = {
   user: null,
   profile: null,
   localMode: false,
-  auth,
-  db,
-  storage,
-  user: null,
-  profile: null,
 
   authReady: new Promise(resolve => {
     onAuthStateChanged(auth, async user => {
-      firebaseService.user = user;
-      firebaseService.profile = null;
-
       if (user) {
+        firebaseService.user = user;
         firebaseService.profile = await firebaseService.getUserDocByUid(user.uid);
+        saveLocalAuth({ uid: user.uid, email: user.email });
+      } else {
+        const localAuth = loadLocalAuth();
+        if (localAuth?.uid) {
+          firebaseService.user = { uid: localAuth.uid, email: localAuth.email };
+          firebaseService.profile = await firebaseService.getUserDocByUid(localAuth.uid);
+        } else {
+          firebaseService.user = null;
+          firebaseService.profile = null;
+        }
       }
-
-      resolve(user);
+      resolve(firebaseService.user);
     });
   }),
 
   onAuthStateChanged(callback) {
     return onAuthStateChanged(auth, async user => {
-      firebaseService.user = user;
-      firebaseService.profile = null;
-
       if (user) {
+        firebaseService.user = user;
         firebaseService.profile = await firebaseService.getUserDocByUid(user.uid);
+        saveLocalAuth({ uid: user.uid, email: user.email });
+      } else {
+        const localAuth = loadLocalAuth();
+        if (localAuth?.uid) {
+          firebaseService.user = { uid: localAuth.uid, email: localAuth.email };
+          firebaseService.profile = await firebaseService.getUserDocByUid(localAuth.uid);
+        } else {
+          firebaseService.user = null;
+          firebaseService.profile = null;
+        }
       }
-
-      callback(user);
+      callback(firebaseService.user);
     });
   },
 
@@ -217,16 +243,26 @@ const firebaseService = {
       }
     }
 
+    saveLocalAuth({ uid, email: userData.email });
     firebaseService.profile = perfil;
     return perfil;
   },
 
   async signIn(email, password) {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    saveLocalAuth({ uid: credential.user.uid, email });
+    return credential;
   },
 
   async signOut() {
-    return await firebaseSignOut(auth);
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      // ignore if there is no active Firebase auth session
+    }
+    clearLocalAuth();
+    firebaseService.user = null;
+    firebaseService.profile = null;
   },
 
   async sendPasswordReset(email) {

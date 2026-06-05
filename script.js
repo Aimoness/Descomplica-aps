@@ -1089,7 +1089,12 @@ async function excluirRegistro(index) {
 // =============================
 // INICIAR DASHBOARD
 // =============================
-window.onload = function(){
+window.onload = async function(){
+  if (window.firebaseService?.authReady) {
+    await window.firebaseService.authReady;
+    appState.currentUser = window.firebaseService.user;
+    appState.currentProfile = window.firebaseService.profile;
+  }
 
   if (document.getElementById("inicio")) {
     mostrarSecao("inicio");
@@ -1121,6 +1126,9 @@ window.onload = function(){
     mostrarPacientes();
   }
 
+  if (document.getElementById("meuPerfilConteudo") && typeof renderizarMeuPerfil === "function") {
+    renderizarMeuPerfil();
+  }
 };
 
 // =============================
