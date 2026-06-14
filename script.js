@@ -4,7 +4,7 @@
 let editandoIndex = null;
 
 // =============================
-// FIREBASE STATE
+// SUPABASE STATE
 // =============================
 const appState = {
   currentUser: null,
@@ -67,6 +67,15 @@ function escaparHTML(valor = "") {
 function obterValor(id) {
   const el = document.getElementById(id);
   return el ? el.value.trim() : "";
+}
+
+function lerArquivoComoDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function definirTexto(id, texto) {
@@ -438,8 +447,22 @@ async function cadastrar() {
     cpf: limparCPF(obterValor("cpfCadastro")),
     telefone: obterValor("telefoneCadastro"),
     password: obterValor("senhaCadastro"),
-    tipo: tipo
+    tipo: tipo,
+    cargo: "",
+    registroProfissional: "",
+    unidade: "",
+    fotoPerfil: ""
   };
+
+  const fotoInput = document.getElementById("fotoPerfil");
+  if (fotoInput?.files?.length > 0) {
+    const arquivoFoto = fotoInput.files[0];
+    if (!arquivoFoto.type.startsWith("image/")) {
+      mostrarMensagem("Selecione uma imagem válida", "erro");
+      return;
+    }
+    usuario.fotoPerfil = await lerArquivoComoDataURL(arquivoFoto);
+  }
 
   if (
     !usuario.nome ||
@@ -481,13 +504,9 @@ async function cadastrar() {
   }
 
   if (tipo === "profissional") {
-    usuario.cargo =
-      obterValor("funcaoProfissionalCadastro") ||
-      obterValor("cargoProfissionalCadastro");
-    usuario.registroProfissional =
-      obterValor("registroProfissionalCadastro");
-    usuario.unidade =
-      obterValor("unidadeCadastro");
+    usuario.cargo = obterValor("funcaoProfissionalCadastro");
+    usuario.registroProfissional = obterValor("registroProfissionalCadastro");
+    usuario.unidade = obterValor("unidadeCadastro");
 
     if (!usuario.cargo || !usuario.registroProfissional) {
       mostrarMensagem(

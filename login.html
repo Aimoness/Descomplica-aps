@@ -198,6 +198,11 @@ window.tipoEscolhido = tipo;
         <input id="telefoneCadastro" class="form-control">
       </div>
 
+      <div class="col-md-4">
+        <label>Foto de perfil</label>
+        <input type="file" id="fotoPerfil" accept="image/*" class="form-control">
+      </div>
+
       <div class="col-md-4 campo-profissional">
         <label>Funcao</label>
         <input id="funcaoProfissionalCadastro" class="form-control" placeholder="Ex: Enfermeiro(a)">
@@ -266,7 +271,7 @@ window.tipoEscolhido = tipo;
   </div>
 </div>
 
-<script type="module" src="firebase-service.js"></script>
+<script type="module" src="supabase-service.js"></script>
 <script src="script.js"></script>
 <script>
 const paramsLogin = new URLSearchParams(window.location.search);
