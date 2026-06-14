@@ -29,6 +29,64 @@ function saveLocalData(key, data) {
   localStorage.setItem(key, JSON.stringify(data || []));
 }
 
+function getLocalUsers() {
+  return parseLocalData(localStorageKeys.usuarios);
+}
+
+function getLocalHistoricos() {
+  return parseLocalData(localStorageKeys.historicos);
+}
+
+function getLocalConsultas() {
+  return parseLocalData(localStorageKeys.consultas);
+}
+
+function saveLocalUser(user) {
+  const usuarios = getLocalUsers();
+  const index = usuarios.findIndex(u => u.uid === user.uid);
+  if (index !== -1) {
+    usuarios[index] = user;
+  } else {
+    usuarios.push(user);
+  }
+  saveLocalData(localStorageKeys.usuarios, usuarios);
+}
+
+function saveLocalHistorico(registro) {
+  const historicos = getLocalHistoricos();
+  historicos.push(registro);
+  saveLocalData(localStorageKeys.historicos, historicos);
+}
+
+function saveLocalConsulta(consulta) {
+  const consultas = getLocalConsultas();
+  consultas.push(consulta);
+  saveLocalData(localStorageKeys.consultas, consultas);
+}
+
+function deleteLocalHistoricoById(docId) {
+  const historicos = getLocalHistoricos().filter(item => item.__docId !== docId);
+  saveLocalData(localStorageKeys.historicos, historicos);
+}
+
+function updateLocalHistorico(docId, registro) {
+  const historicos = getLocalHistoricos();
+  const index = historicos.findIndex(item => item.__docId === docId);
+  if (index !== -1) {
+    historicos[index] = { __docId: docId, ...registro };
+    saveLocalData(localStorageKeys.historicos, historicos);
+  }
+}
+
+function updateLocalConsulta(docId, data) {
+  const consultas = getLocalConsultas();
+  const index = consultas.findIndex(item => item.__docId === docId);
+  if (index !== -1) {
+    consultas[index] = { __docId: docId, ...data };
+    saveLocalData(localStorageKeys.consultas, consultas);
+  }
+}
+
 function generateLocalId(prefix = "local") {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -101,14 +159,7 @@ const firebaseService = {
   profile: null,
   localMode: false,
 
-  authReady: (async () => {
-    const localAuth = loadLocalAuth();
-    if (localAuth?.uid) {
-      firebaseService.user = localAuth;
-      firebaseService.profile = await firebaseService.getUserDocByUid(localAuth.uid);
-    }
-    return firebaseService.user;
-  })(),
+  authReady: null,
 
   onAuthStateChanged(callback) {
     callback(firebaseService.user);
@@ -122,13 +173,72 @@ const firebaseService = {
       email: userData.email,
       password: userData.password
     });
-
-    const res = await supabaseAuthFetch("/signup", {
-      method: "POST",
-      body
-    });
-
-    const data = await res.json();
+    console.log("[supabase-service] signUp request body:", userData);
+    let res;
+    let data;
+    try {
+      res = await supabaseAuthFetch("/signup", {
+        method: "POST",
+        body
+      });
+      data = await res.json();
+    } catch (err) {
+      const msg = String(err?.message || "");
+      console.warn("[supabase-service] signUp request failed:", err);
+      
+      // Handle Supabase email send rate limit: allow local fallback so 'primeiro acesso' works
+      if (msg.includes('over_email_send_rate_limit') || msg.includes('429')) {
+        console.warn('[supabase-service] Supabase email rate limit exceeded — falling back to local mode');
+        enableLocalMode();
+        const localUid = generateLocalId('user');
+        const perfilLocal = {
+          uid: localUid,
+          nome: userData.nome,
+          email: userData.email,
+          cpf: userData.cpf,
+          telefone: userData.telefone || "",
+          tipo: userData.tipo || "paciente",
+          fotoPerfil: userData.fotoPerfil || "",
+          dataCadastro: new Date().toISOString(),
+          sexo: userData.sexo || "",
+          estadoCivil: userData.estadoCivil || "",
+          data: userData.data || "",
+          estado: userData.estado || "",
+          cidade: userData.cidade || "",
+          bairro: userData.bairro || "",
+          rua: userData.rua || "",
+          numero: userData.numero || "",
+          cargo: userData.cargo || "",
+          registroProfissional: userData.registroProfissional || "",
+          unidade: userData.unidade || "",
+          especialidade: userData.especialidade || "",
+          informacoesSaude: userData.informacoesSaude || "",
+          exames: userData.exames || ""
+        };
+        saveLocalAuth({ uid: localUid, email: userData.email });
+        saveLocalData(localStorageKeys.usuarios, [...getLocalUsers(), perfilLocal]);
+        firebaseService.profile = perfilLocal;
+        return perfilLocal;
+      }
+      
+      // If duplicate email, try to recover existing perfil from users table
+      if (msg.includes('23505') || msg.toLowerCase().includes('duplicate key')) {
+        try {
+          const resp = await supabaseFetch(`/usuarios?select=*&email=eq.${encodeURIComponent(userData.email)}`);
+          const results = await resp.json();
+          if (results && results.length > 0) {
+            const existing = results[0];
+            saveLocalAuth({ uid: existing.uid || generateLocalId('user'), email: userData.email });
+            firebaseService.profile = existing;
+            return existing;
+          }
+        } catch (e2) {
+          console.warn('[supabase-service] failed to fetch existing perfil after duplicate email (auth)', e2);
+        }
+      }
+      throw err;
+    }
+    console.log("[supabase-service] signUp response:", data);
     const user = data.user || data;
     const uid = user?.id || generateLocalId("user");
 
@@ -157,18 +267,92 @@ const firebaseService = {
       exames: userData.exames || ""
     };
 
+    // Map to snake_case for PostgREST (Supabase) if DB uses snake_case
+    function toSnake(perf) {
+      return {
+        uid: perf.uid,
+        nome: perf.nome,
+        email: perf.email,
+        cpf: perf.cpf,
+        telefone: perf.telefone,
+        tipo: perf.tipo,
+        foto_perfil: perf.fotoPerfil,
+        data_cadastro: perf.dataCadastro,
+        sexo: perf.sexo,
+        estado_civil: perf.estadoCivil,
+        data: perf.data,
+        estado: perf.estado,
+        cidade: perf.cidade,
+        bairro: perf.bairro,
+        rua: perf.rua,
+        numero: perf.numero,
+        cargo: perf.cargo,
+        registro_profissional: perf.registroProfissional,
+        unidade: perf.unidade,
+        especialidade: perf.especialidade,
+        informacoes_saude: perf.informacoesSaude,
+        exames: perf.exames
+      };
+    }
+
     try {
-      const response = await supabaseFetch(`/usuarios`, {
+      const bodyToInsert = toSnake(perfil);
+
+      // First, create a minimal profile to avoid schema mismatch
+      const minimal = {
+        uid: bodyToInsert.uid,
+        nome: bodyToInsert.nome,
+        email: bodyToInsert.email,
+        cpf: bodyToInsert.cpf
+      };
+
+      let response = await supabaseFetch(`/usuarios`, {
         method: "POST",
-        body: JSON.stringify(perfil)
+        body: JSON.stringify(minimal)
       });
-      const inserted = await response.json();
-      const record = Array.isArray(inserted) ? inserted[0] : inserted;
+      let inserted = await response.json();
+      let record = Array.isArray(inserted) ? inserted[0] : inserted;
+
       saveLocalAuth({ uid, email: userData.email });
+
+      // Then try to PATCH the rest of the fields (best-effort)
+      try {
+        await supabaseFetch(`/usuarios?uid=eq.${encodeURIComponent(uid)}`, {
+          method: "PATCH",
+          body: JSON.stringify(bodyToInsert)
+        });
+
+        // fetch updated record
+        const fetchResp = await supabaseFetch(`/usuarios?select=*&uid=eq.${encodeURIComponent(uid)}`);
+        const fetched = await fetchResp.json();
+        if (fetched && fetched.length > 0) record = fetched[0];
+      } catch (patchErr) {
+        console.warn('[supabase-service] PATCH to update perfil failed, keeping minimal record', patchErr);
+      }
+
       firebaseService.profile = record || perfil;
       return firebaseService.profile;
     } catch (error) {
-      if (error.message.includes("permission") || error.message.includes("401")) {
+      const msg = String(error?.message || "");
+
+      // If duplicate email in auth or insert, try to recover existing profile by email
+      if (msg.includes('23505') || msg.toLowerCase().includes('duplicate key')) {
+        console.warn('[supabase-service] email duplicate — attempting to load existing perfil');
+        try {
+          const resp = await supabaseFetch(`/usuarios?select=*&email=eq.${encodeURIComponent(userData.email)}`);
+          const results = await resp.json();
+          if (results && results.length > 0) {
+            const existing = results[0];
+            saveLocalAuth({ uid: existing.uid || uid, email: userData.email });
+            firebaseService.profile = existing;
+            return existing;
+          }
+        } catch (err2) {
+          console.warn('[supabase-service] failed to fetch existing perfil after duplicate email', err2);
+        }
+      }
+
+      if (msg.includes("permission") || msg.includes("401")) {
         enableLocalMode();
         saveLocalAuth({ uid, email: userData.email });
         saveLocalData(localStorageKeys.usuarios, [...getLocalUsers(), perfil]);
@@ -514,3 +698,18 @@ const firebaseService = {
 };
 
 window.firebaseService = firebaseService;
+
+// Initialize authReady after the service object is fully defined
+firebaseService.authReady = (async () => {
+  const localAuth = loadLocalAuth();
+  if (localAuth?.uid) {
+    firebaseService.user = localAuth;
+    try {
+      firebaseService.profile = await firebaseService.getUserDocByUid(localAuth.uid);
+    } catch (e) {
+      console.warn("[supabase-service] failed to load profile during authReady:", e);
+      firebaseService.profile = null;
+    }
+  }
+  return firebaseService.user;
+})();

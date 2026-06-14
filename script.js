@@ -518,21 +518,26 @@ async function cadastrar() {
   }
 
   try {
+    console.log("[cadastrar] payload:", usuario);
     const perfil = await window.firebaseService.signUp(usuario);
+    console.log("[cadastrar] sucesso — perfil retornado:", perfil);
+    
     appState.usuarios.push(perfil);
     mostrarMensagem(
-      "Cadastro realizado com sucesso!",
+      "Cadastro realizado com sucesso! Você será redirecionado para o login.",
       "sucesso"
     );
 
+    // Aguardar 1.5s e redirecionar
     setTimeout(() => {
-      voltarLogin();
-    }, 1000);
+      console.log("Redirecionando para login.html...");
+      window.location.href = "./login.html";
+    }, 1500);
   } catch (error) {
-    console.error(error);
+    console.error("[cadastrar] erro:", error);
     const mensagemErro = String(error?.message || "");
     const detalhe = mensagemErro.includes("permissions")
-      ? "Verifique as regras do Firestore no console do Firebase."
+      ? "Verifique as regras do Supabase."
       : "Verifique os dados e tente novamente.";
 
     mostrarMensagem(
