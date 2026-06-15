@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -26,15 +26,15 @@ window.pageRole = "profissional";
     <h4>Descomplica<br>APS</h4>
 
     <div class="resumo-sidebar">
-      <p>👥 Total pacientes: <strong id="totalPacientes">0</strong></p>
-      <p>🚨 Em alerta: <strong id="totalAlertas">0</strong></p>
+      <p>ðŸ‘¥ Total pacientes: <strong id="totalPacientes">0</strong></p>
+      <p>ðŸš¨ Em alerta: <strong id="totalAlertas">0</strong></p>
     </div>
 
     <nav>
-      <a href="#alertas">Alertas críticos</a>
+      <a href="#alertas">Alertas crÃ­ticos</a>
       <a href="#registros">Registros recentes</a>
       <button onclick="mostrarSecao('pacientesSec')" class="menu-btn" data-section-target="pacientesSec">Pacientes</button>
-      <button onclick="mostrarSecao('alertasSec')" class="menu-btn" data-section-target="alertasSec">Alertas críticos</button>
+      <button onclick="mostrarSecao('alertasSec')" class="menu-btn" data-section-target="alertasSec">Alertas crÃ­ticos</button>
       <button onclick="mostrarSecao('registrosSec')" class="menu-btn" data-section-target="registrosSec">Registros recentes</button>
       <button onclick="mostrarSecao('consultasProfissionalSec')" class="menu-btn" data-section-target="consultasProfissionalSec">Consultas</button>
     </nav>
@@ -87,9 +87,9 @@ window.pageRole = "profissional";
 
   <!-- ALERTAS -->
   <section class="dashboard-card" id="alertasSec">
-    <h5 class="text-danger">Alertas Críticos</h5>
+    <h5 class="text-danger">Alertas CrÃ­ticos</h5>
     <div id="alertas">
-      <p class="text-muted mb-0"> Nenhum alerta crítico no momento.</p>
+      <p class="text-muted mb-0"> Nenhum alerta crÃ­tico no momento.</p>
     </div>
   </section>
 
@@ -118,7 +118,7 @@ window.pageRole = "profissional";
 
 </div>
 
-<script type="module" src="supabase-service.js"></script>
+<script src="supabase-service.js"></script>
 <script src="script.js"></script>
 
 <div class="modal fade" id="modalEditarPaciente" tabindex="-1">
@@ -191,7 +191,7 @@ window.pageRole = "profissional";
 
 <script>
 async function prepararDashboardProfissional() {
-  await window.firebaseService.authReady;
+  await window.supabaseService.authReady;
 
   mostrarPacientes();
   atualizarTotalPacientes();
@@ -225,3 +225,5 @@ prepararDashboardProfissional();
 <footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>
+
+

@@ -25,28 +25,28 @@ function getTipoEscolhido() {
 }
 
 async function carregarUsuarios() {
-  if (!window.firebaseService) return [];
-  appState.usuarios = await window.firebaseService.getAllUsers();
+  if (!window.supabaseService) return [];
+  appState.usuarios = await window.supabaseService.getAllUsers();
   return appState.usuarios;
 }
 
 async function carregarConsultas() {
-  if (!window.firebaseService) return [];
-  appState.consultas = await window.firebaseService.getConsultas();
+  if (!window.supabaseService) return [];
+  appState.consultas = await window.supabaseService.getConsultas();
   return appState.consultas;
 }
 
 async function carregarHistorico(cpf) {
-  if (!cpf || !window.firebaseService) return [];
+  if (!cpf || !window.supabaseService) return [];
   let usuario = appState.usuarios.find(u => u.cpf === cpf);
 
   if (!usuario) {
-    usuario = await window.firebaseService.getUserDocByCpf(cpf);
+    usuario = await window.supabaseService.getUserDocByCpf(cpf);
   }
 
   if (!usuario) return [];
 
-  const historicos = await window.firebaseService.getHistoricosByUsuarioId(usuario.uid);
+  const historicos = await window.supabaseService.getHistoricosByUsuarioId(usuario.uid);
   appState.historicos[cpf] = historicos;
   return historicos;
 }
@@ -256,9 +256,9 @@ async function login() {
   }
 
   try {
-    await window.firebaseService.signIn(email, senhaDigitada);
-    appState.currentUser = window.firebaseService.user;
-    appState.currentProfile = await window.firebaseService.getUserDocByUid(appState.currentUser.uid);
+    await window.supabaseService.signIn(email, senhaDigitada);
+    appState.currentUser = window.supabaseService.user;
+    appState.currentProfile = await window.supabaseService.getUserDocByUid(appState.currentUser.uid);
     await carregarUsuarios();
     await carregarConsultas();
 
@@ -281,15 +281,15 @@ async function login() {
 // VERIFICA LOGIN
 // =============================
 async function verificarLogin() {
-  await window.firebaseService.authReady;
+  await window.supabaseService.authReady;
 
-  if (!window.firebaseService.user) {
+  if (!window.supabaseService.user) {
     window.location.href = "index.html";
     return false;
   }
 
-  appState.currentUser = window.firebaseService.user;
-  appState.currentProfile = await window.firebaseService.getUserDocByUid(appState.currentUser.uid);
+  appState.currentUser = window.supabaseService.user;
+  appState.currentProfile = await window.supabaseService.getUserDocByUid(appState.currentUser.uid);
   await carregarUsuarios();
   await carregarConsultas();
 
@@ -325,7 +325,7 @@ async function logout() {
   if (!confirmar) return;
 
   try {
-    await window.firebaseService.signOut();
+    await window.supabaseService.signOut();
     appState.currentUser = null;
     appState.currentProfile = null;
     mostrarMensagem("Logout realizado!", "sucesso");
@@ -482,7 +482,7 @@ async function cadastrar() {
     return;
   }
 
-  const existeCpf = await window.firebaseService.getUserDocByCpf(usuario.cpf);
+  const existeCpf = await window.supabaseService.getUserDocByCpf(usuario.cpf);
 
   if (existeCpf) {
     mostrarMensagem(
@@ -519,7 +519,7 @@ async function cadastrar() {
 
   try {
     console.log("[cadastrar] payload:", usuario);
-    const perfil = await window.firebaseService.signUp(usuario);
+    const perfil = await window.supabaseService.signUp(usuario);
     console.log("[cadastrar] sucesso — perfil retornado:", perfil);
     
     appState.usuarios.push(perfil);
@@ -562,7 +562,7 @@ async function recuperarSenha() {
   }
 
   try {
-    await window.firebaseService.sendPasswordReset(email);
+    await window.supabaseService.sendPasswordReset(email);
     mostrarMensagem(
       "Enviamos um link de recuperação para o seu e-mail.",
       "sucesso"
@@ -627,7 +627,7 @@ async function salvarRegistro() {
     return;
   }
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
 
   if (!usuario) {
     mostrarMensagem(
@@ -659,13 +659,13 @@ async function salvarRegistro() {
     registro.__docId = registroExistente.__docId;
 
     if (registro.__docId) {
-      await window.firebaseService.updateHistorico(registro.__docId, registro);
+      await window.supabaseService.updateHistorico(registro.__docId, registro);
     }
 
     historico[editandoIndex] = registro;
     editandoIndex = null;
   } else {
-    const novoRegistro = await window.firebaseService.addHistorico(usuario.uid, registro);
+    const novoRegistro = await window.supabaseService.addHistorico(usuario.uid, registro);
     historico.push(novoRegistro);
   }
 
@@ -715,7 +715,7 @@ function limparCampos() {
 // EDITAR REGISTRO
 // =============================
 async function editarRegistro(index) {
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) return;
 
   const historico = await carregarHistorico(usuario.cpf);
@@ -755,7 +755,7 @@ async function mostrarHistorico() {
   const historicoDiv = document.getElementById("historico");
   if (!historicoDiv) return;
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) {
     historicoDiv.innerHTML = "<p>Usuário não identificado.</p>";
     return;
@@ -1089,14 +1089,14 @@ async function excluirRegistro(index) {
 
   if (!confirmar) return;
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) return;
 
   let historico = await carregarHistorico(usuario.cpf);
   const item = historico[index];
   if (!item || !item.__docId) return;
 
-  await window.firebaseService.deleteHistoricoById(item.__docId);
+  await window.supabaseService.deleteHistoricoById(item.__docId);
   historico.splice(index, 1);
   appState.historicos[usuario.cpf] = historico;
 
@@ -1114,10 +1114,10 @@ async function excluirRegistro(index) {
 // INICIAR DASHBOARD
 // =============================
 window.onload = async function(){
-  if (window.firebaseService?.authReady) {
-    await window.firebaseService.authReady;
-    appState.currentUser = window.firebaseService.user;
-    appState.currentProfile = window.firebaseService.profile;
+  if (window.supabaseService?.authReady) {
+    await window.supabaseService.authReady;
+    appState.currentUser = window.supabaseService.user;
+    appState.currentProfile = window.supabaseService.profile;
   }
 
   if (document.getElementById("inicio")) {
@@ -1364,7 +1364,7 @@ div.appendChild(card);
 // ATUALIZAR CARDS
 // =============================
 async function atualizarCards() {
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) return;
 
   const historico = await carregarHistorico(usuario.cpf);
@@ -1971,11 +1971,11 @@ async function excluirPaciente(cpf) {
 
   if (!confirmar) return;
 
-  const usuario = await window.firebaseService.getUserDocByCpf(cpf);
+  const usuario = await window.supabaseService.getUserDocByCpf(cpf);
   if (usuario && usuario.uid) {
-    await window.firebaseService.deleteHistoricosByUsuarioId(usuario.uid);
-    await window.firebaseService.deleteConsultasByUsuarioId(usuario.uid);
-    await window.firebaseService.deleteUser(usuario.uid);
+    await window.supabaseService.deleteHistoricosByUsuarioId(usuario.uid);
+    await window.supabaseService.deleteConsultasByUsuarioId(usuario.uid);
+    await window.supabaseService.deleteUser(usuario.uid);
   }
 
   const usuarios = await carregarUsuarios();
@@ -2017,7 +2017,7 @@ async function editarPaciente(cpf) {
   paciente.telefone = novoTelefone;
 
   if (paciente.uid) {
-    await window.firebaseService.updateUserDoc(paciente.uid, {
+    await window.supabaseService.updateUserDoc(paciente.uid, {
       nome: paciente.nome,
       telefone: paciente.telefone
     });
@@ -2049,7 +2049,7 @@ async function agendarConsulta() {
     return;
   }
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) {
     mostrarMensagem("Usuário não identificado", "erro");
     return;
@@ -2064,7 +2064,7 @@ async function agendarConsulta() {
     status: "Pendente"
   };
 
-  const novaConsulta = await window.firebaseService.addConsulta(consulta);
+  const novaConsulta = await window.supabaseService.addConsulta(consulta);
   appState.consultas.push(novaConsulta);
 
   mostrarMensagem(
@@ -2125,7 +2125,7 @@ async function mostrarConsultas() {
   const div = document.getElementById("listaConsultas");
   if (!div) return;
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) return;
 
   const consultas = await carregarConsultas();
@@ -2180,7 +2180,7 @@ async function mostrarConsultasProfissional() {
   const div = document.getElementById("listaConsultasProfissional");
   if (!div) return;
 
-  const usuario = appState.currentProfile || await window.firebaseService.getUserDocByUid(window.firebaseService.user?.uid);
+  const usuario = appState.currentProfile || await window.supabaseService.getUserDocByUid(window.supabaseService.user?.uid);
   if (!usuario) return;
 
   const consultas = await carregarConsultas();
@@ -2233,7 +2233,7 @@ async function mostrarConsultasProfissional() {
       const consulta = consultas[index];
       if (!consulta || !consulta.__docId) return;
 
-      await window.firebaseService.updateConsulta(consulta.__docId, {
+      await window.supabaseService.updateConsulta(consulta.__docId, {
         status: "Confirmada",
         profissionalId: usuario.uid,
         profissionalNome: usuario.nome
@@ -2257,7 +2257,7 @@ async function mostrarConsultasProfissional() {
       const consulta = consultas[index];
       if (!consulta || !consulta.__docId) return;
 
-      await window.firebaseService.updateConsulta(consulta.__docId, {
+      await window.supabaseService.updateConsulta(consulta.__docId, {
         status: "Cancelada"
       });
 
@@ -2498,7 +2498,7 @@ async function salvarMeuPerfil() {
     dadosAtualizados.especialidade = obterValor("perfilEspecialidade");
   }
 
-  const atualizado = await window.firebaseService.updateUserDoc(usuario.uid, dadosAtualizados);
+  const atualizado = await window.supabaseService.updateUserDoc(usuario.uid, dadosAtualizados);
   appState.currentProfile = atualizado;
   appState.usuarios = await carregarUsuarios();
 
@@ -2519,7 +2519,7 @@ async function alterarFotoPerfil(input) {
   if (!usuario) return;
 
   try {
-    const url = await window.firebaseService.uploadProfilePhoto(usuario.uid, arquivo);
+    const url = await window.supabaseService.uploadProfilePhoto(usuario.uid, arquivo);
     appState.currentProfile.fotoPerfil = url;
     appState.usuarios = await carregarUsuarios();
     mostrarMensagem("Foto atualizada!", "sucesso");
@@ -2540,7 +2540,7 @@ async function salvarEdicaoPaciente() {
 
   if (!paciente) return;
 
-  const atualizado = await window.firebaseService.updateUserDoc(paciente.uid, {
+  const atualizado = await window.supabaseService.updateUserDoc(paciente.uid, {
     nome,
     telefone
   });
@@ -2561,5 +2561,6 @@ async function salvarEdicaoPaciente() {
     }
   }
 }
+
 
 

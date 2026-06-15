@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <link rel="manifest" href="manifest.json">
@@ -86,7 +86,7 @@ body.dashboard-page {
   background: #a93226;
 }
 
-/* Conteúdo */
+/* ConteÃºdo */
 .dashboard-content {
   flex: 1;
   padding: 36px 42px;
@@ -139,7 +139,7 @@ body.dashboard-page {
   margin-top: 12px;
 }
 
-/* Cards de seção */
+/* Cards de seÃ§Ã£o */
 .dashboard-card {
   background: #ffffff;
   border: none;
@@ -155,7 +155,7 @@ body.dashboard-page {
   margin-bottom: 18px;
 }
 
-/* Formulário */
+/* FormulÃ¡rio */
 .dashboard-card .form-label {
   font-weight: 600;
   font-size: 14px;
@@ -239,7 +239,7 @@ window.pageRole = "paciente";
     <div class="user-name" id="nomeUsuario"></div>
 
    <button onclick="irInicio()" class="menu-btn" data-section-target="inicio">
-  Início
+  InÃ­cio
 </button>
 
 <button onclick="irRegistrar()" class="menu-btn" data-section-target="registrar">
@@ -247,11 +247,11 @@ window.pageRole = "paciente";
 </button>
 
 <button onclick="irHistorico()" class="menu-btn" data-section-target="historicoSec">
-  Histórico
+  HistÃ³rico
 </button>
 
 <button onclick="irEvolucao()" class="menu-btn" data-section-target="evolucaoSec">
-  Evolução
+  EvoluÃ§Ã£o
 </button>
 
 <button onclick="irAgendamento()" class="menu-btn" data-section-target="agendamentoSec">
@@ -265,7 +265,7 @@ window.pageRole = "paciente";
     <button class="btn-sair" onclick="logout()">Sair</button>
   </aside>
 
-  <!-- CONTEÚDO -->
+  <!-- CONTEÃšDO -->
   <main class="dashboard-content">
 
     <div class="dashboard-header">
@@ -296,18 +296,18 @@ window.pageRole = "paciente";
     <section class="dashboard-cards-grid" id="inicio">
 
       <div class="dashboard-info-card">
-        <small>Última Pressão</small>
-        <div id="cardPressao">—</div>
+        <small>Ãšltima PressÃ£o</small>
+        <div id="cardPressao">â€”</div>
       </div>
 
       <div class="dashboard-info-card">
-        <small>Última Glicemia</small>
-        <div id="cardGlicemia">—</div>
+        <small>Ãšltima Glicemia</small>
+        <div id="cardGlicemia">â€”</div>
       </div>
 
       <div class="dashboard-info-card">
-        <small>Último Registro</small>
-        <div id="cardData">—</div>
+        <small>Ãšltimo Registro</small>
+        <div id="cardData">â€”</div>
       </div>
 
       <div class="dashboard-info-card alerta-status" id="boxAlerta">
@@ -319,17 +319,17 @@ window.pageRole = "paciente";
 
     <!-- REGISTRAR DADOS -->
     <section id="registrar" class="dashboard-card">
-      <h5 class="text-primary">Registrar Informações de Saúde</h5>
+      <h5 class="text-primary">Registrar InformaÃ§Ãµes de SaÃºde</h5>
 
       <div class="row g-3">
 
         <div class="col-md-4">
-          <label class="form-label">Pressão Sistólica</label>
+          <label class="form-label">PressÃ£o SistÃ³lica</label>
           <input type="number" class="form-control" id="pressao_sistolica">
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Pressão Diastólica</label>
+          <label class="form-label">PressÃ£o DiastÃ³lica</label>
           <input type="number" class="form-control" id="pressao_diastolica">
         </div>
 
@@ -352,14 +352,14 @@ window.pageRole = "paciente";
 
       <div class="acoes-registro">
         <button class="btn btn-primary" onclick="salvarRegistro()">
-          Salvar informações
+          Salvar informaÃ§Ãµes
         </button>
 
         <button
         class="btn btn-secondary"
         onclick="cancelarEdicao()"
         >
-       Cancelar edição
+       Cancelar ediÃ§Ã£o
        </button>
 
       </div>
@@ -387,7 +387,7 @@ window.pageRole = "paciente";
 
     <div class="col-md-6">
       <label class="form-label">
-        Horário
+        HorÃ¡rio
       </label>
 
       <input
@@ -418,16 +418,16 @@ window.pageRole = "paciente";
 
 </section>
 
-    <!-- HISTÓRICO -->
+    <!-- HISTÃ“RICO -->
     <section id="historicoSec" class="dashboard-card">
-      <h5>Histórico</h5>
+      <h5>HistÃ³rico</h5>
       <div id="historico"></div>
     </section>
 
-    <!-- EVOLUÇÃO -->
+    <!-- EVOLUÃ‡ÃƒO -->
     <section id="evolucaoSec" class="dashboard-card">
       <div class="grafico-topo">
-        <h5>Evolução</h5>
+        <h5>EvoluÃ§Ã£o</h5>
 
         <button
           type="button"
@@ -439,7 +439,7 @@ window.pageRole = "paciente";
       </div>
 
       <small class="text-muted d-block mb-3">
-        Acompanhamento de pressão
+        Acompanhamento de pressÃ£o
       </small>
 
       <div class="grafico-wrapper">
@@ -456,12 +456,12 @@ window.pageRole = "paciente";
 
 </div>
 
-<script type="module" src="supabase-service.js"></script>
+<script src="supabase-service.js"></script>
 <script src="script.js"></script>
 
 <script>
 async function prepararDashboardPaciente() {
-  await window.firebaseService.authReady;
+  await window.supabaseService.authReady;
   verificarLogin();
   mostrarConsultas();
   mostrarSecao("inicio");
@@ -491,3 +491,5 @@ prepararDashboardPaciente();
 <footer class="app-footer">Programado por @Aimone Souza Silva</footer>
 </body>
 </html>
+
+

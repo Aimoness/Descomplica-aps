@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://qcnhmffxzlxpkctnexwg.supabase.co";
+﻿const SUPABASE_URL = "https://qcnhmffxzlxpkctnexwg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_9kriS76EBT36WXUuGPrlYA_g96yxXi5";
 const SUPABASE_REST_URL = `${SUPABASE_URL}/rest/v1`;
 const SUPABASE_AUTH_URL = `${SUPABASE_URL}/auth/v1`;
@@ -108,9 +108,9 @@ function clearLocalAuth() {
 }
 
 function enableLocalMode() {
-  window.firebaseService = window.firebaseService || {};
-  if (window.firebaseService) {
-    window.firebaseService.localMode = true;
+  window.supabaseService = window.supabaseService || {};
+  if (window.supabaseService) {
+    window.supabaseService.localMode = true;
   }
 }
 
@@ -154,7 +154,7 @@ function buildFilter(field, operator, value) {
   return `${field}=${operator}.${encodeURIComponent(value)}`;
 }
 
-const firebaseService = {
+const supabaseService = {
   user: null,
   profile: null,
   localMode: false,
@@ -162,7 +162,7 @@ const firebaseService = {
   authReady: null,
 
   onAuthStateChanged(callback) {
-    callback(firebaseService.user);
+    callback(supabaseService.user);
     return {
       unsubscribe() {}
     };
@@ -188,7 +188,7 @@ const firebaseService = {
       
       // Handle Supabase email send rate limit: allow local fallback so 'primeiro acesso' works
       if (msg.includes('over_email_send_rate_limit') || msg.includes('429')) {
-        console.warn('[supabase-service] Supabase email rate limit exceeded — falling back to local mode');
+        console.warn('[supabase-service] Supabase email rate limit exceeded â€” falling back to local mode');
         enableLocalMode();
         const localUid = generateLocalId('user');
         const perfilLocal = {
@@ -217,7 +217,7 @@ const firebaseService = {
         };
         saveLocalAuth({ uid: localUid, email: userData.email });
         saveLocalData(localStorageKeys.usuarios, [...getLocalUsers(), perfilLocal]);
-        firebaseService.profile = perfilLocal;
+        supabaseService.profile = perfilLocal;
         return perfilLocal;
       }
       
@@ -229,7 +229,7 @@ const firebaseService = {
           if (results && results.length > 0) {
             const existing = results[0];
             saveLocalAuth({ uid: existing.uid || generateLocalId('user'), email: userData.email });
-            firebaseService.profile = existing;
+            supabaseService.profile = existing;
             return existing;
           }
         } catch (e2) {
@@ -269,31 +269,31 @@ const firebaseService = {
 
     // Map to snake_case for PostgREST (Supabase) if DB uses snake_case
     function toSnake(perf) {
-      return {
-        uid: perf.uid,
-        nome: perf.nome,
-        email: perf.email,
-        cpf: perf.cpf,
-        telefone: perf.telefone,
-        tipo: perf.tipo,
-        foto_perfil: perf.fotoPerfil,
-        data_cadastro: perf.dataCadastro,
-        sexo: perf.sexo,
-        estado_civil: perf.estadoCivil,
-        data: perf.data,
-        estado: perf.estado,
-        cidade: perf.cidade,
-        bairro: perf.bairro,
-        rua: perf.rua,
-        numero: perf.numero,
-        cargo: perf.cargo,
-        registro_profissional: perf.registroProfissional,
-        unidade: perf.unidade,
-        especialidade: perf.especialidade,
-        informacoes_saude: perf.informacoesSaude,
-        exames: perf.exames
-      };
-    }
+  return {
+    uid: perf.uid,
+    nome: perf.nome,
+    email: perf.email,
+    cpf: perf.cpf,
+    telefone: perf.telefone,
+    tipo: perf.tipo,
+    fotoPerfil: perf.fotoPerfil,
+    dataCadastro: perf.dataCadastro,
+    sexo: perf.sexo,
+    estadoCivil: perf.estadoCivil,
+    data: perf.data,
+    estado: perf.estado,
+    cidade: perf.cidade,
+    bairro: perf.bairro,
+    rua: perf.rua,
+    numero: perf.numero,
+    cargo: perf.cargo,
+    registroProfissional: perf.registroProfissional,
+    unidade: perf.unidade,
+    especialidade: perf.especialidade,
+    informacoesSaude: perf.informacoesSaude,
+    exames: perf.exames
+  };
+}
 
     try {
       const bodyToInsert = toSnake(perfil);
@@ -330,21 +330,21 @@ const firebaseService = {
         console.warn('[supabase-service] PATCH to update perfil failed, keeping minimal record', patchErr);
       }
 
-      firebaseService.profile = record || perfil;
-      return firebaseService.profile;
+      supabaseService.profile = record || perfil;
+      return supabaseService.profile;
     } catch (error) {
       const msg = String(error?.message || "");
 
       // If duplicate email in auth or insert, try to recover existing profile by email
       if (msg.includes('23505') || msg.toLowerCase().includes('duplicate key')) {
-        console.warn('[supabase-service] email duplicate — attempting to load existing perfil');
+        console.warn('[supabase-service] email duplicate â€” attempting to load existing perfil');
         try {
           const resp = await supabaseFetch(`/usuarios?select=*&email=eq.${encodeURIComponent(userData.email)}`);
           const results = await resp.json();
           if (results && results.length > 0) {
             const existing = results[0];
             saveLocalAuth({ uid: existing.uid || uid, email: userData.email });
-            firebaseService.profile = existing;
+            supabaseService.profile = existing;
             return existing;
           }
         } catch (err2) {
@@ -356,7 +356,7 @@ const firebaseService = {
         enableLocalMode();
         saveLocalAuth({ uid, email: userData.email });
         saveLocalData(localStorageKeys.usuarios, [...getLocalUsers(), perfil]);
-        firebaseService.profile = perfil;
+        supabaseService.profile = perfil;
         return perfil;
       }
       throw error;
@@ -383,9 +383,9 @@ const firebaseService = {
       throw new Error("Falha ao autenticar com Supabase.");
     }
 
-    firebaseService.user = { uid: user.id, email: user.email };
+    supabaseService.user = { uid: user.id, email: user.email };
     saveLocalAuth({ uid: user.id, email: user.email, access_token: data.access_token });
-    return { user: firebaseService.user, session: data };
+    return { user: supabaseService.user, session: data };
   },
 
   async signOut() {
@@ -403,8 +403,8 @@ const firebaseService = {
       // ignore logout errors
     }
     clearLocalAuth();
-    firebaseService.user = null;
-    firebaseService.profile = null;
+    supabaseService.user = null;
+    supabaseService.profile = null;
   },
 
   async sendPasswordReset(email) {
@@ -697,19 +697,20 @@ const firebaseService = {
   }
 };
 
-window.firebaseService = firebaseService;
+window.supabaseService = supabaseService;
 
 // Initialize authReady after the service object is fully defined
-firebaseService.authReady = (async () => {
+supabaseService.authReady = (async () => {
   const localAuth = loadLocalAuth();
   if (localAuth?.uid) {
-    firebaseService.user = localAuth;
+    supabaseService.user = localAuth;
     try {
-      firebaseService.profile = await firebaseService.getUserDocByUid(localAuth.uid);
+      supabaseService.profile = await supabaseService.getUserDocByUid(localAuth.uid);
     } catch (e) {
       console.warn("[supabase-service] failed to load profile during authReady:", e);
-      firebaseService.profile = null;
+      supabaseService.profile = null;
     }
   }
-  return firebaseService.user;
+  return supabaseService.user;
 })();
+
