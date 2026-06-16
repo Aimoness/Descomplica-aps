@@ -2394,6 +2394,28 @@ function montarAvatar(usuario) {
   return `<span>${inicial}</span>`;
 }
 
+function atualizarCabecalhoUsuario(usuario) {
+  if (!usuario) return;
+
+  [
+    "nomeUsuario",
+    "nomeUsuarioTopo",
+    "nomeProf",
+    "nomeProfTopo"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = usuario.nome || "";
+  });
+
+  [
+    "dashboardAvatarPaciente",
+    "dashboardAvatarProf"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = montarAvatar(usuario);
+  });
+}
+
 function obterConsultasDoPaciente(cpf) {
   const usuario = appState.usuarios.find(u => u.cpf === cpf);
   if (!usuario) return [];
@@ -2448,33 +2470,49 @@ async function renderizarMeuPerfil() {
     ? consultas.map(c => `${formatarDataConsulta(c.data)} às ${c.hora} - ${c.status}`).join("<br>")
     : "Nenhuma consulta agendada.";
 
-  let html = '';
+  const historicoHtml = historico.length
+    ? `${historico.length} registro(s) de acompanhamento.`
+    : "Nenhum atendimento registrado.";
 
-  html += '<div class="perfil-header">';
-  html += '<div class="perfil-avatar">' + montarAvatar(usuario) + '</div>';
-  html += '<div class="perfil-detalhes">';
-  html += `<h3>${escaparHTML(usuario.nome || "-")}</h3>`;
-  html += `<p><strong>CPF:</strong> ${formatarCPF(usuario.cpf || "")}</p>`;
-  html += `<p><strong>Role:</strong> ${escaparHTML(tipo === "paciente" ? "Paciente" : "Profissional")}</p>`;
-  html += '</div>';
-  html += '</div>';
+  box.innerHTML = `
+    <div class="perfil-grid">
+      <aside class="perfil-resumo">
+        <div class="perfil-avatar">${montarAvatar(usuario)}</div>
+        <label class="btn btn-outline-primary btn-sm mt-3">
+          Alterar foto
+          <input type="file" accept="image/*" hidden onchange="alterarFotoPerfil(this)">
+        </label>
+        <h4>${escaparHTML(usuario.nome || "Usuário")}</h4>
+        <p>${escaparHTML(tipo === "paciente" ? "Paciente" : (usuario.cargo || "Profissional de saúde"))}</p>
+      </aside>
 
-  if (tipo === "paciente") {
-    html += '<div class="perfil-card">';
-    html += `<p><strong>Telefone:</strong> ${escaparHTML(usuario.telefone || "Não informado")}</p>`;
-    html += `<p><strong>Endereço:</strong> ${escaparHTML(montarEndereco(usuario))}</p>`;
-    html += `<p><strong>Histórico:</strong> ${historico.length ? historico.map(h => escaparHTML(h.descricao)).join("<br>") : "Nenhum histórico registrado."}</p>`;
-    html += `<p><strong>Consultas:</strong><br>${consultasHtml}</p>`;
-    html += '</div>';
-  } else {
-    html += '<div class="perfil-card">';
-    html += `<p><strong>Registro:</strong> ${escaparHTML(usuario.registroProfissional || "Não informado")}</p>`;
-    html += `<p><strong>Especialidade:</strong> ${escaparHTML(usuario.especialidade || "Não informado")}</p>`;
-    html += `<p><strong>Consultas:</strong><br>${consultasHtml}</p>`;
-    html += '</div>';
-  }
+      <div class="perfil-detalhes">
+        <div class="perfil-campos">
+          <label>Nome completo<input id="perfilNome" class="form-control"></label>
+          ${tipo === "paciente" ? `<label>Data de nascimento<input id="perfilNascimento" type="date" class="form-control"></label>` : ""}
+          <label>CPF<input id="perfilCpf" class="form-control" disabled></label>
+          ${tipo === "paciente" ? `<label>Endereço<input id="perfilEndereco" class="form-control"></label>` : ""}
+          <label>Telefone<input id="perfilTelefone" class="form-control"></label>
+          <label>E-mail<input id="perfilEmail" type="email" class="form-control"></label>
+          ${tipo !== "paciente" ? `<label>Cargo/função<input id="perfilCargo" class="form-control"></label>` : ""}
+          ${tipo !== "paciente" ? `<label>Registro profissional<input id="perfilRegistro" class="form-control"></label>` : ""}
+          ${tipo !== "paciente" ? `<label>Especialidade<input id="perfilEspecialidade" class="form-control"></label>` : ""}
+          ${tipo === "paciente" ? `<label class="perfil-span">Informações de saúde cadastradas<textarea id="perfilSaude" class="form-control" rows="3"></textarea></label>` : ""}
+          ${tipo === "paciente" ? `<label class="perfil-span">Exames registrados<textarea id="perfilExames" class="form-control" rows="3"></textarea></label>` : ""}
+        </div>
 
-  box.innerHTML = html;
+        <button class="btn btn-primary mt-3" onclick="salvarMeuPerfil()">Salvar alterações</button>
+
+        <div class="perfil-historicos">
+          <div><strong>Consultas</strong><p>${consultasHtml}</p></div>
+          <div><strong>Atendimentos</strong><p>${historicoHtml}</p></div>
+          ${tipo === "paciente" ? `<div><strong>Exames</strong><p>${escaparHTML(usuario.exames || "Nenhum exame registrado.")}</p></div>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
+
+  preencherFormularioPerfil(usuario);
 }
 
 async function salvarMeuPerfil() {
@@ -2503,6 +2541,7 @@ async function salvarMeuPerfil() {
   appState.usuarios = await carregarUsuarios();
 
   mostrarMensagem("Perfil atualizado!", "sucesso");
+  atualizarCabecalhoUsuario(atualizado);
   renderizarMeuPerfil();
 }
 
@@ -2523,6 +2562,7 @@ async function alterarFotoPerfil(input) {
     appState.currentProfile.fotoPerfil = url;
     appState.usuarios = await carregarUsuarios();
     mostrarMensagem("Foto atualizada!", "sucesso");
+    atualizarCabecalhoUsuario(appState.currentProfile);
     renderizarMeuPerfil();
   } catch (error) {
     console.error(error);

@@ -239,7 +239,7 @@ window.pageRole = "paciente";
     <div class="user-name" id="nomeUsuario"></div>
 
    <button onclick="irInicio()" class="menu-btn" data-section-target="inicio">
-  InÃ­cio
+  Iní­cio
 </button>
 
 <button onclick="irRegistrar()" class="menu-btn" data-section-target="registrar">
@@ -247,11 +247,11 @@ window.pageRole = "paciente";
 </button>
 
 <button onclick="irHistorico()" class="menu-btn" data-section-target="historicoSec">
-  HistÃ³rico
+  Histórico
 </button>
 
 <button onclick="irEvolucao()" class="menu-btn" data-section-target="evolucaoSec">
-  EvoluÃ§Ã£o
+  Evolução
 </button>
 
 <button onclick="irAgendamento()" class="menu-btn" data-section-target="agendamentoSec">
@@ -265,7 +265,7 @@ window.pageRole = "paciente";
     <button class="btn-sair" onclick="logout()">Sair</button>
   </aside>
 
-  <!-- CONTEÃšDO -->
+  <!-- CONTEÚDO -->
   <main class="dashboard-content">
 
     <div class="dashboard-header">
@@ -296,17 +296,17 @@ window.pageRole = "paciente";
     <section class="dashboard-cards-grid" id="inicio">
 
       <div class="dashboard-info-card">
-        <small>Ãšltima PressÃ£o</small>
-        <div id="cardPressao">â€”</div>
+        <small>Última Pressão</small>
+        <div id="cardPressao">—</div>
       </div>
 
       <div class="dashboard-info-card">
-        <small>Ãšltima Glicemia</small>
-        <div id="cardGlicemia">â€”</div>
+        <small>Última Glicemia</small>
+        <div id="cardGlicemia">—</div>
       </div>
 
       <div class="dashboard-info-card">
-        <small>Ãšltimo Registro</small>
+        <small>Último Registro</small>
         <div id="cardData">â€”</div>
       </div>
 
@@ -319,17 +319,17 @@ window.pageRole = "paciente";
 
     <!-- REGISTRAR DADOS -->
     <section id="registrar" class="dashboard-card">
-      <h5 class="text-primary">Registrar InformaÃ§Ãµes de SaÃºde</h5>
+      <h5 class="text-primary">Registrar Informações de Saúde</h5>
 
       <div class="row g-3">
 
         <div class="col-md-4">
-          <label class="form-label">PressÃ£o SistÃ³lica</label>
+          <label class="form-label">Pressão Sistólica</label>
           <input type="number" class="form-control" id="pressao_sistolica">
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">PressÃ£o DiastÃ³lica</label>
+          <label class="form-label">Pressão Diastólica</label>
           <input type="number" class="form-control" id="pressao_diastolica">
         </div>
 
@@ -352,14 +352,14 @@ window.pageRole = "paciente";
 
       <div class="acoes-registro">
         <button class="btn btn-primary" onclick="salvarRegistro()">
-          Salvar informaÃ§Ãµes
+          Salvar informações
         </button>
 
         <button
         class="btn btn-secondary"
         onclick="cancelarEdicao()"
         >
-       Cancelar ediÃ§Ã£o
+       Cancelar edição
        </button>
 
       </div>
@@ -387,7 +387,7 @@ window.pageRole = "paciente";
 
     <div class="col-md-6">
       <label class="form-label">
-        HorÃ¡rio
+        Horário
       </label>
 
       <input
@@ -420,14 +420,14 @@ window.pageRole = "paciente";
 
     <!-- HISTÃ“RICO -->
     <section id="historicoSec" class="dashboard-card">
-      <h5>HistÃ³rico</h5>
+      <h5>Histórico</h5>
       <div id="historico"></div>
     </section>
 
     <!-- EVOLUÃ‡ÃƒO -->
     <section id="evolucaoSec" class="dashboard-card">
       <div class="grafico-topo">
-        <h5>EvoluÃ§Ã£o</h5>
+        <h5>Evolução</h5>
 
         <button
           type="button"
@@ -439,7 +439,7 @@ window.pageRole = "paciente";
       </div>
 
       <small class="text-muted d-block mb-3">
-        Acompanhamento de pressÃ£o
+        Acompanhamento de pressão
       </small>
 
       <div class="grafico-wrapper">
